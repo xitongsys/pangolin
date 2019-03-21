@@ -3,15 +3,17 @@ package server
 import (
 	"fmt"
 	"net"
+	"time"
 
+	"cache"
+	"comp"
 	"header"
 	"tun"
-	"comp"
 )
 
 type PServer struct {
 	Addr      string
-	ClientMap map[string]string
+	ClientMap *cache.Cache
 	TunConn   tun.Tun
 	UdpConn   *net.UDPConn
 }
@@ -33,7 +35,7 @@ func NewPServer(addr string, tname string, mtu int) (*PServer, error) {
 
 	return &PServer{
 		Addr:      addr,
-		ClientMap: map[string]string{},
+		ClientMap: cache.NewCache(time.Minute * 10),
 		TunConn:   tun,
 		UdpConn:   conn,
 	}, nil
@@ -44,7 +46,7 @@ func (s *PServer) sendToClient() {
 	for {
 		if n, err := s.TunConn.Read(data); err == nil && n > 0 {
 			if proto, src, dst, err := header.Get(data); err == nil {
-				if caddr, ok := s.ClientMap[dst+"->"+src]; ok {
+				if caddr := s.ClientMap.Get(dst + "->" + src); caddr != "" {
 					if add, err := net.ResolveUDPAddr("udp", caddr); err == nil {
 						cmpData := comp.CompressGzip(data[:n])
 						s.UdpConn.WriteToUDP(cmpData, add)
@@ -65,7 +67,8 @@ func (s *PServer) recvFromClient() {
 				continue
 			}
 			if proto, src, dst, err := header.Get(uncmpData); err == nil {
-				s.ClientMap[src+"->"+dst] = caddr.String()
+				s.ClientMap.Put(src+"->"+dst, caddr.String())
+				//s.ClientMap[src+"->"+dst] = caddr.String()
 				s.TunConn.Write(uncmpData)
 				fmt.Printf("[recv] client:%s src:%s dst:%s proto:%s\n", caddr.String(), src, dst, proto)
 			}
