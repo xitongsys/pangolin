@@ -2,8 +2,10 @@ package com.example.pangolin;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.VpnService;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -63,7 +65,17 @@ public class PangolinVpnService extends VpnService {
 
                 dns = ex.getString("dns");
 
-                startForeground(1, new Notification(R.mipmap.ic_launcher, "Pangolin", System.currentTimeMillis()));
+                Notification.Builder builder = new Notification.Builder(this.getApplicationContext());
+                Intent nfIntent = new Intent(this, MainActivity.class);
+                builder.setContentIntent(PendingIntent.getActivity(this, 0, nfIntent, 0))
+                        .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_launcher))
+                        .setContentTitle("Pangolin")
+                        .setContentText("Server: " + serverIP + ":" + serverPort)
+                        .setWhen(System.currentTimeMillis());
+                Notification notification = builder.getNotification();
+
+                //startForeground(1, new Notification(R.mipmap.ic_launcher, "Pangolin", System.currentTimeMillis()));
+                startForeground(1, notification);
                 connect();
             }
         }catch (Exception e){
