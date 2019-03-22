@@ -157,7 +157,7 @@ public class PangolinVpnService extends VpnService {
 
                         VpnService.Builder builder = PangolinVpnService.this.new Builder();
                         builder.setMtu(1500)
-                                .addAddress(localIP, 24)
+                                .addAddress(localIP, localPrefixLength)
                                 .addRoute("0.0.0.0", 0)
                                 .addDnsServer(dns)
                                 .setSession("Pangolin")
