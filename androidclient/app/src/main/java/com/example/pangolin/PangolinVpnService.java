@@ -27,6 +27,7 @@ public class PangolinVpnService extends VpnService {
     final static String ACTION_CONNECT = "connect";
     final static int MAX_PACKET_SIZE = 65536;
     static String serverIP, localIP;
+    static int localPrefixLength = 8;
     static int serverPort;
     static String dns;
     Thread sendThread,recvThread;
@@ -44,20 +45,31 @@ public class PangolinVpnService extends VpnService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("onStartCommand", "start: " + intent.getAction());
-        if (intent != null && ACTION_DISCONNECT.equals(intent.getAction())) {
-            disconnect();
-            return START_NOT_STICKY;
-        } else {
-            Bundle ex = intent.getExtras();
-            serverIP = ex.getString("serverIP");
-            serverPort = ex.getInt("serverPort");
-            localIP = ex.getString("localIP");
-            dns = ex.getString("dns");
+        try {
+            if (intent != null && ACTION_DISCONNECT.equals(intent.getAction())) {
+                disconnect();
+                return START_NOT_STICKY;
+            } else {
+                Bundle ex = intent.getExtras();
+                serverIP = ex.getString("serverIP");
+                serverPort = ex.getInt("serverPort");
+                String[] localAddrs = ex.getString("localIP").split("/");
+                if(localAddrs.length>=1){
+                    localIP = localAddrs[0];
+                }
+                if(localAddrs.length>=2){
+                    localPrefixLength = Integer.parseInt(localAddrs[1]);
+                }
 
-            startForeground(1, new Notification(R.mipmap.ic_launcher, "Pangolin", System.currentTimeMillis()));
-            connect();
-            return START_STICKY;
+                dns = ex.getString("dns");
+
+                startForeground(1, new Notification(R.mipmap.ic_launcher, "Pangolin", System.currentTimeMillis()));
+                connect();
+            }
+        }catch (Exception e){
+            Log.e("onStartCommmand", e.toString());
         }
+        return START_STICKY;
     }
 
     public static ByteBuffer compress(ByteBuffer bf) {
