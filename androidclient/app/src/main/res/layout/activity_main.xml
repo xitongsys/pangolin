@@ -101,7 +101,7 @@
 
             <Button
                 android:id="@+id/connButton"
-                android:layout_width="wrap_content"
+                android:layout_width="109dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Connect" />

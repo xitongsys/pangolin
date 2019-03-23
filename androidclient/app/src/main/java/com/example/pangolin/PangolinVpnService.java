@@ -43,7 +43,7 @@ public class PangolinVpnService extends VpnService {
     @Override
     public void onCreate(){
         pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_CANCEL_CURRENT);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class PangolinVpnService extends VpnService {
                 builder.setContentIntent(pendingIntent)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("Pangolin")
-                        .setContentText("Server: " + serverIP + ":" + serverPort)
+                        .setContentText("<Server>" + serverIP + ":" + serverPort)
                         .setWhen(System.currentTimeMillis());
                 Notification notification = builder.build();
 
