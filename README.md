@@ -1,6 +1,6 @@
-#Pangolin
+# Pangolin
 
-Pangolin is a pure-go implenmentation of TUN VPN.
+Pangolin is a Go implenmentation of TUN VPN.
 
 ## Deploy
 ### Server
