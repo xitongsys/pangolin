@@ -29,14 +29,21 @@ public class PangolinVpnService extends VpnService {
     final static String ACTION_CONNECT = "connect";
     final static int MAX_PACKET_SIZE = 65536;
     static String serverIP, localIP;
-    static int localPrefixLength = 8;
+    static int localPrefixLength = 24;
     static int serverPort;
     static String dns;
     Thread sendThread,recvThread;
     Thread sendrecvThread;
     ParcelFileDescriptor localTunnel;
+    private PendingIntent pendingIntent;
 
     public PangolinVpnService() {
+    }
+
+    @Override
+    public void onCreate(){
+        pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
+                PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     @Override
@@ -65,14 +72,13 @@ public class PangolinVpnService extends VpnService {
 
                 dns = ex.getString("dns");
 
-                Notification.Builder builder = new Notification.Builder(this.getApplicationContext());
-                Intent nfIntent = new Intent(this, MainActivity.class);
-                builder.setContentIntent(PendingIntent.getActivity(this, 0, nfIntent, 0))
-                        .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_launcher))
+                Notification.Builder builder = new Notification.Builder(this);
+                builder.setContentIntent(pendingIntent)
+                        .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("Pangolin")
                         .setContentText("Server: " + serverIP + ":" + serverPort)
                         .setWhen(System.currentTimeMillis());
-                Notification notification = builder.getNotification();
+                Notification notification = builder.build();
 
                 //startForeground(1, new Notification(R.mipmap.ic_launcher, "Pangolin", System.currentTimeMillis()));
                 startForeground(1, notification);

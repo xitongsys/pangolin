@@ -67,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:ems="10"
-                android:text="10.0.0.3/8" />
+                android:text="10.0.0.3/24" />
 
         </LinearLayout>
 

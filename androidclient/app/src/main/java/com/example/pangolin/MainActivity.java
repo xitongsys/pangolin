@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         editServer.setText(preferences.getString("serverIP", "192.168.0.1"));
         editServerPort.setText(preferences.getString("serverPort", "12345"));
-        editLocal.setText(preferences.getString("localIP", "10.0.0.3/8"));
+        editLocal.setText(preferences.getString("localIP", "10.0.0.3/24"));
         editDNS.setText(preferences.getString("dns", "8.8.8.8"));
 
         btDisconn.setOnClickListener(new View.OnClickListener() {
