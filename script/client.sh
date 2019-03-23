@@ -1,5 +1,5 @@
-SERVER=""
-GW=""
+SERVER="139.180.132.42"
+GW="192.168.43.1"
 
 ip tuntap add dev tun0 mod tun
 ip addr add 10.0.0.2/24 dev tun0
