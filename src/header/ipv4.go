@@ -51,7 +51,7 @@ func (h *IPv4) LenBytes() uint16 {
 }
 
 func (h *IPv4) CalChecksum() uint16 {
-	bs := h.Marshal()
+	bs := h.MarshalRaw()
 	bs[10] = 0
 	bs[11] = 0
 	s := uint32(0)
@@ -77,17 +77,18 @@ func (h *IPv4) Unmarshal(bs []byte) error {
 	h.Checksum = binary.BigEndian.Uint16(bs[10:12])
 	h.Src = binary.BigEndian.Uint32(bs[12:16])
 	h.Dst = binary.BigEndian.Uint32(bs[16:20])
-	headerLen := h.VerIHL & 0xf
-	if int(headerLen * 4) > 20 {
-		h.Opt = bs[20:h.Len * 4]
+	headerLen := int(h.HeaderLen()) 
+	if headerLen > 20 {
+		h.Opt = bs[20:headerLen]
 	}else{
 		h.Opt = []byte{}
 	}
 	return nil
 }
 
-func (h *IPv4) Marshal() []byte {
-	res := make([]byte, h.Len*4)
+func (h *IPv4) MarshalRaw() []byte {
+	headerLen := int(h.HeaderLen()) 
+	res := make([]byte, headerLen)
 	res[0] = byte(h.VerIHL)
 	res[1] = byte(h.Tos)
 	binary.BigEndian.PutUint16(res[2:], h.Len)
@@ -102,5 +103,11 @@ func (h *IPv4) Marshal() []byte {
 		res[20 + i] = h.Opt[i]
 	}
 	return res
+}
 
+func (h *IPv4) Marshal() []byte {
+	res := h.MarshalRaw()
+	checkSum := h.CalChecksum()
+	binary.BigEndian.PutUint16(res[10:], checkSum)
+	return res
 }
