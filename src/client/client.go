@@ -37,6 +37,13 @@ func (c *PClient) sendToServer() {
 	for {
 		if n, err := c.TunConn.Read(data); err == nil && n > 0 {
 			if proto, src, dst, err := header.Get(data); err == nil {
+				ipv4Header := header.IPv4{}
+				ipv4Header.Unmarshal(data)
+				newData := ipv4Header.Marshal()
+				for i := 0; i<len(newData); i++ {
+					data[i] = newData[i]
+				}
+
 				cmpData := comp.CompressGzip(data[:n])
 				c.UdpConn.Write(cmpData)
 				fmt.Printf("[send] Len:%d src:%s dst:%s proto:%s\n", n, src, dst, proto)
