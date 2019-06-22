@@ -6,6 +6,7 @@ import (
 
 	"comp"
 	"tun"
+	"header"
 )
 
 type PClient struct {
@@ -35,9 +36,11 @@ func (c *PClient) sendToServer() {
 	data := make([]byte, c.TunConn.GetMtu()*2)
 	for {
 		if n, err := c.TunConn.Read(data); err == nil && n > 0 {
-			cmpData := comp.CompressGzip(data[:n])
-			c.UdpConn.Write(cmpData)
-			fmt.Printf("[send] Len:%d\n Content:%s\n", n, string(data[:n]))
+			if proto, src, dst, err := header.Get(data); err == nil {
+				cmpData := comp.CompressGzip(data[:n])
+				c.UdpConn.Write(cmpData)
+				fmt.Printf("[send] Len:%d src:%s dst:%s proto:%s\n", n, src, dst, proto)
+			}
 		}
 	}
 }
@@ -50,8 +53,10 @@ func (c *PClient) recvFromServer() error {
 			if err2 != nil {
 				continue
 			}
-			c.TunConn.Write(uncmpData)
-			fmt.Printf("[recv] Len:%d\n Content:%s\n", len(uncmpData), string(uncmpData))
+			if proto, src, dst, err := header.Get(uncmpData); err == nil {
+				c.TunConn.Write(uncmpData)
+				fmt.Printf("[recv] Len:%d src:%s dst:%s proto:%s\n", len(uncmpData), src, dst, proto)
+			}
 		}
 	}
 }
