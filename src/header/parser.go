@@ -11,7 +11,7 @@ func Get(data []byte) (proto string, src string, dst string, err error) {
 		return
 	}
 
-	iph.Unmarshal(data[:20])
+	iph.Unmarshal(data)
 	if iph.Protocol == uint8(UDPID) {
 		proto = "udp"
 		udph.Unmarshal(data[iph.HeaderLen():])
