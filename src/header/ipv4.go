@@ -77,7 +77,8 @@ func (h *IPv4) Unmarshal(bs []byte) error {
 	h.Checksum = binary.BigEndian.Uint16(bs[10:12])
 	h.Src = binary.BigEndian.Uint32(bs[12:16])
 	h.Dst = binary.BigEndian.Uint32(bs[16:20])
-	if len(bs) > 20 {
+	headerLen := h.VerIHL & 0xf
+	if int(headerLen * 4) > 20 {
 		h.Opt = bs[20:h.Len * 4]
 	}else{
 		h.Opt = []byte{}
