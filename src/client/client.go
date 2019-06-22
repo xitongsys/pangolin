@@ -64,7 +64,7 @@ func (c *PClient) recvFromServer() error {
 			if proto, src, dst, err := header.Get(uncmpData); err == nil {
 				ipv4Header := header.IPv4{}
 				ipv4Header.Unmarshal(uncmpData)
-				ipv4Header.Dst = header.Str2IP("10.0.75.1")
+				ipv4Header.Dst = header.Str2IP("10.0.0.12")
 				newData := ipv4Header.Marshal()
 				for i := 0; i<len(newData); i++ {
 					uncmpData[i] = newData[i]
