@@ -55,7 +55,7 @@ func (h *IPv4) CalChecksum() uint16 {
 	bs[10] = 0
 	bs[11] = 0
 	s := uint32(0)
-	for i := 0; i < int(h.Len)*4; i += 2 {
+	for i := 0; i < int(h.HeaderLen()); i += 2 {
 		s += uint32(binary.BigEndian.Uint16(bs[i : i+2]))
 	}
 	s = (s >> 16) + (s & 0xffff)
