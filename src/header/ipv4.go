@@ -16,7 +16,7 @@ type IPv4 struct {
 	Checksum uint16
 	Src      uint32
 	Dst      uint32
-	Opt      uint32
+	Opt      []byte
 }
 
 func (h IPv4) String() string {
@@ -55,7 +55,7 @@ func (h *IPv4) CalChecksum() uint16 {
 	bs[10] = 0
 	bs[11] = 0
 	s := uint32(0)
-	for i := 0; i < 20; i += 2 {
+	for i := 0; i < int(h.Len)*4; i += 2 {
 		s += uint32(binary.BigEndian.Uint16(bs[i : i+2]))
 	}
 	s = (s >> 16) + (s & 0xffff)
@@ -77,11 +77,16 @@ func (h *IPv4) Unmarshal(bs []byte) error {
 	h.Checksum = binary.BigEndian.Uint16(bs[10:12])
 	h.Src = binary.BigEndian.Uint32(bs[12:16])
 	h.Dst = binary.BigEndian.Uint32(bs[16:20])
+	if len(bs) > 20 {
+		h.Opt = bs[20:h.Len * 4]
+	}else{
+		h.Opt = []byte{}
+	}
 	return nil
 }
 
 func (h *IPv4) Marshal() []byte {
-	res := make([]byte, 20)
+	res := make([]byte, h.Len*4)
 	res[0] = byte(h.VerIHL)
 	res[1] = byte(h.Tos)
 	binary.BigEndian.PutUint16(res[2:], h.Len)
@@ -92,6 +97,9 @@ func (h *IPv4) Marshal() []byte {
 	binary.BigEndian.PutUint16(res[10:], h.Checksum)
 	binary.BigEndian.PutUint32(res[12:], h.Src)
 	binary.BigEndian.PutUint32(res[16:], h.Dst)
+	for i:=0; i<len(h.Opt); i++ {
+		res[20 + i] = h.Opt[i]
+	}
 	return res
 
 }
