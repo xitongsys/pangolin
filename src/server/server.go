@@ -45,7 +45,7 @@ func (s *PServer) sendToClient() {
 	data := make([]byte, s.TunConn.GetMtu()*2)
 	for {
 		if n, err := s.TunConn.Read(data); err == nil && n > 0 {
-			if proto, src, dst, err := header.Get(data); err == nil {
+			if proto, src, dst, err := header.GetBase(data); err == nil {
 				if caddr := s.ClientMap.Get(dst + "->" + src); caddr != "" {
 					if add, err := net.ResolveUDPAddr("udp", caddr); err == nil {
 						cmpData := comp.CompressGzip(data[:n])
@@ -66,7 +66,10 @@ func (s *PServer) recvFromClient() {
 			if errc != nil {
 				continue
 			}
-			if proto, src, dst, err := header.Get(uncmpData); err == nil {
+			ipv4Header := header.IPv4{}
+			ipv4Header.Unmarshal(uncmpData)
+			fmt.Println(ipv4Header)
+			if proto, src, dst, err := header.GetBase(uncmpData); err == nil {
 				s.ClientMap.Put(src+"->"+dst, caddr.String())
 				//s.ClientMap[src+"->"+dst] = caddr.String()
 				s.TunConn.Write(uncmpData)
