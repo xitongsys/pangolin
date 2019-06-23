@@ -37,6 +37,7 @@ func (c *PClient) sendToServer() {
 	for {
 		if n, err := c.TunConn.Read(data); err == nil && n > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
+				/*
 				ipv4Header := header.IPv4{}
 				ipv4Header.Unmarshal(data)
 				ipv4Header.Src = header.Str2IP("10.0.0.12")
@@ -50,6 +51,7 @@ func (c *PClient) sendToServer() {
 				}else if proto == "udp" {
 					header.ReplaceUdpCheckSum(data)
 				}
+				*/
 
 				cmpData := comp.CompressGzip(data[:n])
 				c.UdpConn.Write(cmpData)
@@ -68,6 +70,7 @@ func (c *PClient) recvFromServer() error {
 				continue
 			}
 			if proto, src, dst, err := header.GetBase(uncmpData); err == nil {
+				/*
 				ipv4Header := header.IPv4{}
 				ipv4Header.Unmarshal(uncmpData)
 				ipv4Header.Dst = header.Str2IP("10.0.75.1")
@@ -81,6 +84,7 @@ func (c *PClient) recvFromServer() error {
 				}else if proto == "udp" {
 					header.ReplaceUdpCheckSum(uncmpData)
 				}
+				*/
 
 				c.TunConn.Write(uncmpData)
 				fmt.Printf("[recv] Len:%d src:%s dst:%s proto:%s\n", len(uncmpData), src, dst, proto)
