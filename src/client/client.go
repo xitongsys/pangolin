@@ -45,6 +45,12 @@ func (c *PClient) sendToServer() {
 					data[i] = newData[i]
 				}
 
+				if proto == "tcp" {
+					header.ReplaceTcpCheckSum(data)
+				}else if proto == "udp" {
+					header.ReplaceUdpCheckSum(data)
+				}
+
 				cmpData := comp.CompressGzip(data[:n])
 				c.UdpConn.Write(cmpData)
 				fmt.Printf("[send] Len:%d src:%s dst:%s proto:%s\n", n, src, dst, proto)
@@ -68,6 +74,12 @@ func (c *PClient) recvFromServer() error {
 				newData := ipv4Header.Marshal()
 				for i := 0; i<len(newData); i++ {
 					uncmpData[i] = newData[i]
+				}
+
+				if proto == "tcp" {
+					header.ReplaceTcpCheckSum(uncmpData)
+				}else if proto == "udp" {
+					header.ReplaceUdpCheckSum(uncmpData)
 				}
 
 				c.TunConn.Write(uncmpData)
