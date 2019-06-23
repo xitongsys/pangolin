@@ -38,7 +38,7 @@ func (h TCP) String() string {
 		h.Checksum, h.UrgPointer)
 }
 
-func (h *TCP) LenBytes() uint16 {
+func (h *TCP) HeaderLen() uint16 {
 	return (uint16(h.Offset) >> 4) * 4
 }
 
@@ -70,5 +70,37 @@ func (h *TCP) Unmarshal(bs []byte) error {
 	h.Checksum = binary.BigEndian.Uint16(bs[16:18])
 	h.UrgPointer = binary.BigEndian.Uint16(bs[18:20])
 
+	return nil
+}
+
+func ReplaceTcpCheckSum(bs []byte) error {
+	if len(bs) < 20 {
+		return fmt.Errorf("too short")
+	}
+	ipvh, ipps := IPv4{}, IPv4Pseudo{}
+	if err := ipvh.Unmarshal(bs); err!= nil {
+		return err
+	}
+	ipps.Src = ipvh.Src
+	ipps.Dst = ipvh.Dst
+	ipps.Reserved = 0
+	ipps.Protocol = ipvh.Protocol
+	ipps.Len = ipvh.LenBytes() - ipvh.HeaderLen()
+
+	ippsbs := ipps.Marshal()
+	tcpbs := bs[ipvh.HeaderLen():ipvh.LenBytes()]
+	tcpbs[16] = 0
+	tcpbs[17] = 0
+
+	s := uint32(0)
+	for i := 0; i<len(ippsbs); i+=2 {
+		s +=  uint32(binary.BigEndian.Uint16(ippsbs[i : i+2]))
+	}
+	for i := 0; i<len(tcpbs); i+=2 {
+		s +=  uint32(binary.BigEndian.Uint16(tcpbs[i : i+2]))
+	}
+	s = (s >> 16) + (s & 0xffff)
+	checkSum := uint16(s ^ 0xffffffff)
+	binary.BigEndian.PutUint16(tcpbs[16:], checkSum)
 	return nil
 }

@@ -33,6 +33,8 @@ func (h IPv4) String() string {
 	Checksum: %d,
 	Src: %s,
 	Dst: %s,
+	Opt: %s,
+}
 }
 `
 	return fmt.Sprintf(res, h.VerIHL>>4, h.VerIHL&0xf, h.Tos,

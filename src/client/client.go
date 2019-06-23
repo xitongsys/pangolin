@@ -36,7 +36,7 @@ func (c *PClient) sendToServer() {
 	data := make([]byte, c.TunConn.GetMtu()*2)
 	for {
 		if n, err := c.TunConn.Read(data); err == nil && n > 0 {
-			if proto, src, dst, err := header.Get(data); err == nil {
+			if proto, src, dst, err := header.GetBase(data); err == nil {
 				ipv4Header := header.IPv4{}
 				ipv4Header.Unmarshal(data)
 				ipv4Header.Src = header.Str2IP("10.0.0.12")
@@ -61,7 +61,7 @@ func (c *PClient) recvFromServer() error {
 			if err2 != nil {
 				continue
 			}
-			if proto, src, dst, err := header.Get(uncmpData); err == nil {
+			if proto, src, dst, err := header.GetBase(uncmpData); err == nil {
 				ipv4Header := header.IPv4{}
 				ipv4Header.Unmarshal(uncmpData)
 				ipv4Header.Dst = header.Str2IP("10.0.0.12")
