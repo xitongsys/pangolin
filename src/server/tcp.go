@@ -41,12 +41,14 @@ func (ts *TcpServer) Start() {
 func (ts *TcpServer) handleRequest(conn net.Conn) {
 	//read from client, write to channel
 	go func() {
-		var err error
-		data := util.ReadPacket(conn)
-		if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
-			if proto, src, dst, err := header.GetBase(data); err == nil {
-				ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
-				fmt.Printf("[TcpServer][readFromClient] Len:%d src:%s dst:%s proto:%s\n", len(data), src, dst, proto)
+		for {
+			var err error
+			data := util.ReadPacket(conn)
+			if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
+				if proto, src, dst, err := header.GetBase(data); err == nil {
+					ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
+					fmt.Printf("[TcpServer][readFromClient] Len:%d src:%s dst:%s proto:%s\n", len(data), src, dst, proto)
+				}
 			}
 		}
 	}()
