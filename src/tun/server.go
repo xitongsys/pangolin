@@ -97,6 +97,7 @@ func (ts *TunServer) toTun() {
 			n, _ := ts.TunConn.Write(bs)
 			bs = bs[n:]
 		}
+		fmt.Printf("[TunServer][toTun] data len: %v\n", len(s))
 	}
 }
 
