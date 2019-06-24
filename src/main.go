@@ -1,6 +1,7 @@
 package main
 
 import (
+	"tun"
 	"flag"
 	"fmt"
 	"os"
@@ -12,14 +13,14 @@ import (
 
 var role = flag.String("role", "server", "")
 var saddr = flag.String("server", "0.0.0.0:12345", "")
-var tun = flag.String("tun", "tun0", "")
+var tunName = flag.String("tun", "tun0", "")
 var mtu = flag.Int("mtu", 1500, "")
 
 func main() {
 	flag.Parse()
 	fmt.Println("Welcome to use Pangolin!")
 	if *role == "client" {
-		cp, err := client.NewPClient(*saddr, *tun, *mtu)
+		cp, err := client.NewPClient(*saddr, *tunName, *mtu)
 		if err != nil {
 			fmt.Println("start client failed: ", err)
 			os.Exit(-1)
@@ -27,14 +28,24 @@ func main() {
 		cp.Start()
 
 	} else {
-		sp, err := server.NewPServer(*saddr, *tun, *mtu)
+		tunServer, err := tun.NewTunServer(*tunName, *mtu)
 		if err != nil {
-			fmt.Println("start server failed: ", err)
+			fmt.Println("[main] tun server can't start: ", err)
 			os.Exit(-1)
 		}
-		sp.Start()
+
+		udpServer, err := server.NewUdpServer(*saddr, tunServer)
+		if err != nil {
+			fmt.Println("[main] udp server can't start: ", err)
+			os.Exit(-1)
+		}
+
+		tunServer.Start()
+		udpServer.Start()
+
 	}
-	fmt.Printf("Run as %s, server:%s, tun:%s, mtu:%d\n", *role, *saddr, *tun, *mtu)
+	
+	fmt.Printf("Run as %s, server:%s, tun:%s, mtu:%d\n", *role, *saddr, *tunName, *mtu)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

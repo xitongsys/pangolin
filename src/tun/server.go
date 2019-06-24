@@ -13,6 +13,7 @@ var INPUTCHANNELBUF = 1024
 var OUTPUTCHANNELBUF = 1024
 var TunInput = make(chan string, INPUTCHANNELBUF)
 var TunOutputs = sync.Map{}
+var TunUdpOutput = make(chan string, OUTPUTCHANNELBUF)
 
 type TunServer struct {
 	TunConn Tun
@@ -46,14 +47,29 @@ func (ts *TunServer) Stop() {
 	fmt.Println("tun server stopped")
 }
 
+func (ts *TunServer) GetClientAddr(key string) string {
+	return ts.ClientMap.Get(key)
+}
+
 func (ts *TunServer) WriteToChannel(clientAddr string, data []byte){
-	if _, src, dst, err := header.GetBase(data); err == nil {
-		key := src + "->" + dst
-		if _, ok := TunOutputs.Load(key); !ok {
-			TunOutputs.Store(key, make(chan string))
+	if proto, src, dst, err := header.GetBase(data); err == nil {
+		key := proto + ":" + src + "->" + dst
+		if ts.ClientMap.Get(key) == "" {
+			ts.ClientMap.Put(key, clientAddr)
+		}
+
+		if proto == "tcp" {
+			if _, ok := TunOutputs.Load(key); !ok {
+				TunOutputs.Store(key, make(chan string, OUTPUTCHANNELBUF))
+			}
 		}
 		TunInput <- string(data)
 	}
+}
+
+func (ts *TunServer) ReadFromUdpChannel() []byte {
+	s := <- TunUdpOutput
+	return []byte(s)
 }
 
 func (ts *TunServer) ReadFromChannel(clientAddr string) []byte {
@@ -81,7 +97,7 @@ func (ts *TunServer) fromTun() {
 		data := make([]byte, ts.TunConn.GetMtu()*2)
 		if n, err := ts.TunConn.Read(data); err==nil && n > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
-				if caddr := ts.ClientMap.Get(dst + "->" + src); caddr != "" {
+				if caddr := ts.ClientMap.Get(proto + ":" + dst + "->" + src); caddr != "" {
 					go func() {
 						if tunOutput, ok := TunOutputs.Load(caddr); ok {
 							tunOutput.(chan string) <- string(data[:n])
