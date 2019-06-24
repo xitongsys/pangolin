@@ -63,14 +63,14 @@ func (tc *TcpClient) recvFromServer() error {
 	}
 }
 
-func (c *TcpClient) Start() error {
-	go c.sendToServer()
-	go c.recvFromServer()
+func (tc *TcpClient) Start() error {
+	go tc.sendToServer()
+	go tc.recvFromServer()
 	return nil
 }
 
-func (c *TcpClient) Stop() error {
-	c.TcpConn.Close()
-	c.TunConn.Close()
+func (tc *TcpClient) Stop() error {
+	tc.TcpConn.Close()
+	tc.TunConn.Close()
 	return nil
 }
