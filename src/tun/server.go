@@ -13,10 +13,12 @@ var INPUTCHANNELBUF = 1024
 var OUTPUTCHANNELBUF = 1024
 var TunInput = make(chan string, INPUTCHANNELBUF)
 var TunOutputs = sync.Map{}
+//Key: clientProtocol:clientIP:clientPort
 var TunUdpOutput = make(chan string, OUTPUTCHANNELBUF)
 
 type TunServer struct {
 	TunConn Tun
+	//Key: proto:src->dst   Value: clientProtocol:clientIP:clientPort
 	ClientMap *cache.Cache
 }
 
@@ -47,18 +49,23 @@ func (ts *TunServer) Stop() {
 	fmt.Println("tun server stopped")
 }
 
-func (ts *TunServer) GetClientAddr(key string) string {
-	return ts.ClientMap.Get(key)
+func (ts *TunServer) GetClientAddr(key string) (protocol string, addr string) {
+	s :=  ts.ClientMap.Get(key)
+	if len(s) <= 4 {
+		return "", ""
+	}
+	return s[:3], s[4:]
 }
 
-func (ts *TunServer) WriteToChannel(clientAddr string, data []byte){
+func (ts *TunServer) WriteToChannel(clientProtocol string, clientAddr string, data []byte){
 	if proto, src, dst, err := header.GetBase(data); err == nil {
-		key := proto + ":" + src + "->" + dst
+		key := proto + ":" + src + ":" + dst
 		if ts.ClientMap.Get(key) == "" {
-			ts.ClientMap.Put(key, clientAddr)
+			ts.ClientMap.Put(key, clientProtocol + ":" + clientAddr)
 		}
 
-		if proto == "tcp" {
+		key = clientProtocol + ":" + clientAddr
+		if clientProtocol == "tcp" {
 			if _, ok := TunOutputs.Load(key); !ok {
 				TunOutputs.Store(key, make(chan string, OUTPUTCHANNELBUF))
 			}
@@ -97,13 +104,20 @@ func (ts *TunServer) fromTun() {
 		data := make([]byte, ts.TunConn.GetMtu()*2)
 		if n, err := ts.TunConn.Read(data); err==nil && n > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
-				if caddr := ts.ClientMap.Get(proto + ":" + dst + "->" + src); caddr != "" {
-					go func() {
-						if tunOutput, ok := TunOutputs.Load(caddr); ok {
-							tunOutput.(chan string) <- string(data[:n])
-							fmt.Printf("[send] client:%s src:%s dst:%s proto:%s\n", caddr, src, dst, proto)
-						}
-					}()
+				key := proto + ":" + dst + "->" + src
+				if caddr := ts.ClientMap.Get(key); caddr != "" {
+					clientProtocol := caddr[:3]
+					if clientProtocol == "tcp" {
+						go func() {
+							if tunOutput, ok := TunOutputs.Load(caddr); ok {
+								tunOutput.(chan string) <- string(data[:n])
+								fmt.Printf("[send] client:%s src:%s dst:%s proto:%s\n", caddr, src, dst, proto)
+							}
+						}()
+
+					}else if clientProtocol == "udp" {
+						TunUdpOutput <- string(data[:n])
+					}
 				}
 			}
 		}

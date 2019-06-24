@@ -35,10 +35,10 @@ func NewUdpServer(addr string, tunServer *tun.TunServer) (*UdpServer, error) {
 
 func (us *UdpServer) sendToClient() {
 	for {
-		if data := us.TunServer.ReadFromChannel(us.Addr); len(data) > 0 {
+		if data := us.TunServer.ReadFromUdpChannel(); len(data) > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
 				key := proto + ":" + dst + "->" + src
-				if caddr := us.TunServer.GetClientAddr(key); caddr != "" {
+				if cprotocal, caddr := us.TunServer.GetClientAddr(key); cprotocal!= "" && caddr != "" {
 					if add, err := net.ResolveUDPAddr("udp", caddr); err == nil {
 						cmpData := comp.CompressGzip(data)
 						us.UdpConn.WriteToUDP(cmpData, add)
@@ -59,7 +59,7 @@ func (us *UdpServer) recvFromClient() {
 				continue
 			}
 			if proto, src, dst, err := header.GetBase(uncmpData); err == nil {
-				us.TunServer.WriteToChannel(caddr.String(), uncmpData)
+				us.TunServer.WriteToChannel("udp", caddr.String(), uncmpData)
 				fmt.Printf("[UdpServer][recvFromClient] client:%s src:%s dst:%s proto:%s\n", caddr.String(), src, dst, proto)
 			}
 		}
