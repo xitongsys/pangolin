@@ -82,7 +82,7 @@ func (ts *TunServer) ReadFromUdpChannel() []byte {
 
 func (ts *TunServer) ReadFromChannel(clientAddr string) []byte {
 	data := []byte{}
-	if value, ok := TunOutputs.Load(clientAddr); ok {
+	if value, ok := TunOutputs.Load("tcp:" + clientAddr); ok {
 		s := <- value.(chan string)
 		data = []byte(s)
 	}
