@@ -71,6 +71,7 @@ func (ts *TunServer) WriteToChannel(clientProtocol string, clientAddr string, da
 			}
 		}
 		TunInput <- string(data)
+		fmt.Printf("[TunServer][WriteToChannel] protocol:%v, src:%v, dst:%v\n", proto, src, dst)
 	}
 }
 
@@ -111,13 +112,13 @@ func (ts *TunServer) fromTun() {
 						go func() {
 							if tunOutput, ok := TunOutputs.Load(caddr); ok {
 								tunOutput.(chan string) <- string(data[:n])
-								fmt.Printf("[send] client:%s src:%s dst:%s proto:%s\n", caddr, src, dst, proto)
 							}
 						}()
 
 					}else if clientProtocol == "udp" {
 						TunUdpOutput <- string(data[:n])
 					}
+					fmt.Printf("[TunServer][fromTun] clientProtocol:%v, client:%v src:%v dst:%v proto:%v\n", clientProtocol, caddr, src, dst, proto)
 				}
 			}
 		}
