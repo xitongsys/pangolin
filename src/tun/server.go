@@ -37,7 +37,7 @@ func NewTunServer(tname string, mtu int) (*TunServer, error){
 func (ts *TunServer) Start() {
 	go ts.toTun()
 	go ts.fromTun()
-	fmt.Println("tun server started")
+	fmt.Println("[TunServer] started.")
 }
 
 func (ts *TunServer) Stop() {
@@ -46,7 +46,7 @@ func (ts *TunServer) Stop() {
 		close(value.(chan string))
 		return true
 	})
-	fmt.Println("tun server stopped")
+	fmt.Println("[TunServer] stopped.")
 }
 
 func (ts *TunServer) GetClientAddr(key string) (protocol string, addr string) {
