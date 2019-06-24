@@ -6,16 +6,16 @@ import (
 
 	"comp"
 	"header"
-	"tun"
+	"login"
 )
 
 type UdpServer struct {
 	Addr      string
 	UdpConn   *net.UDPConn
-	TunServer *tun.TunServer
+	LoginManager *login.LoginManager
 }
 
-func NewUdpServer(addr string, tunServer *tun.TunServer) (*UdpServer, error) {
+func NewUdpServer(addr string, loginManager *login.LoginManager) (*UdpServer, error) {
 	add, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("%s is not a valid address", addr)
@@ -29,7 +29,7 @@ func NewUdpServer(addr string, tunServer *tun.TunServer) (*UdpServer, error) {
 	return &UdpServer{
 		Addr:      addr,
 		UdpConn:   conn,
-		TunServer: tunServer,
+		LoginManager: loginManager,
 	}, nil
 }
 
@@ -51,16 +51,19 @@ func (us *UdpServer) writeToClient() {
 }
 
 func (us *UdpServer) readFromClient() {
-	data := make([]byte, us.TunServer.TunConn.GetMtu()*2)
+	data := make([]byte, us.LoginManager.TunServer.TunConn.GetMtu()*2)
 	for {
 		if n, caddr, err := us.UdpConn.ReadFromUDP(data); err == nil && n > 0 {
-			uncmpData, errc := comp.UncompressGzip(data[:n])
-			if errc != nil {
-				continue
-			}
-			if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
-				us.TunServer.WriteToChannel("udp", caddr.String(), uncmpData)
-				fmt.Printf("[UdpServer][readFromClient] client:%v, protocol:%v, src:%v, dst:%v\n", caddr, protocol, src, dst)
+			if user, ok := us.LoginManager.GetUser("udp:" + caddr); ok {
+				uncmpData, errc := comp.UncompressGzip(data[:n])
+				if errc != nil {
+					continue
+				}
+				if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
+					
+					us.TunServer.WriteToChannel("udp", caddr.String(), uncmpData)
+					fmt.Printf("[UdpServer][readFromClient] client:%v, protocol:%v, src:%v, dst:%v\n", caddr, protocol, src, dst)
+				}
 			}
 		}
 	}
