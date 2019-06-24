@@ -40,11 +40,18 @@ func main() {
 			os.Exit(-1)
 		}
 
+		tcpServer, err := server.NewTcpServer(*saddr, tunServer)
+		if err != nil {
+			fmt.Println("[main] tcp server can't start: ", err)
+			os.Exit(-1)
+		}
+
 		tunServer.Start()
 		udpServer.Start()
+		tcpServer.Start()
 
 	}
-	
+
 	fmt.Printf("Run as %s, server:%s, tun:%s, mtu:%d\n", *role, *saddr, *tunName, *mtu)
 
 	var wg sync.WaitGroup
