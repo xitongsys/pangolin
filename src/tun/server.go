@@ -136,14 +136,19 @@ func (ts *TunServer) fromTun() {
 							defer func() {
 								_ = recover()
 							}()
-							
+
 							if tunOutput, ok := TunOutputs.Load(caddr); ok {
 								tunOutput.(chan string) <- string(data[:n])
 							}
 						}()
 
 					}else if clientProtocol == "udp" {
-						TunUdpOutput <- string(data[:n])
+						go func() {
+							defer func() {
+								_ = recover()
+							}()
+							TunUdpOutput <- string(data[:n])
+						}()
 					}
 					fmt.Printf("[TunServer][fromTun] clientProtocol:%v, client:%v src:%v dst:%v proto:%v\n", clientProtocol, caddr, src, dst, proto)
 				}
