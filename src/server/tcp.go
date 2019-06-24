@@ -5,6 +5,8 @@ import (
 	"net"
 
 	"tun"
+	"comp"
+	"util"
 )
 
 type TcpServer struct {
@@ -27,7 +29,7 @@ func NewTcpServer(addr string, tunServer *tun.TunServer) (*TcpServer, error) {
 }
 
 func (ts *TcpServer) Start() {
-	fmt.Println("[TcpServer] started")
+	fmt.Println("[TcpServer] started.")
 	for {
 		if conn, err := ts.TcpListener.Accept(); err == nil{
 			go ts.handleRequest(conn)
@@ -36,58 +38,20 @@ func (ts *TcpServer) Start() {
 }
 
 func (ts *TcpServer) handleRequest(conn net.Conn) {
-	//write to channel
+	//read from client, write to channel
 	go func() {
-		data := make([]byte, 0)
-		for {
-			lenBs := make([]byte, 1)
-			n, err := conn.Read(lenBs)
-			if n > 0 && err == nil {
-				len := int(lenBs[0])
-				if len == 0 {
-					ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
-					data = make([]byte, 0)
-
-				}else{
-					cur := make([]byte, len)
-					left := len
-					for left > 0 {
-						n, err := conn.Read(cur[len-left:])
-						if n > 0 && err == nil {
-							left -= n
-						}
-					}
-					data = append(data, cur...)
-				}
-			}
+		var err error
+		data := util.ReadPacket(conn)
+		if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
+			ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
 		}
 	}()
 
-	//read from channel
+	//read from channel, write to client
 	go func() {
 		for {
-			data := ts.TunServer.ReadFromChannel(ts.Addr)
-			for len(data) > 0 {
-				wc := 255
-				if len(data) < wc {
-					wc = len(data)
-				}
-
-				lenBs := []byte{byte(wc)}
-				for {
-					if n, err := conn.Write(lenBs); n>0 && err == nil {
-						break
-					}
-				}
-
-				wd := data[:wc]
-				for len(wd) > 0 {
-					if n, err := conn.Write(wd); n>0 && err==nil {
-						wd = wd[n:]
-					}
-				}
-
-				data = data[wc:]
+			if data := comp.CompressGzip(ts.TunServer.ReadFromChannel(ts.Addr)); len(data)>0 {
+				util.WritePacket(conn, data)
 			}
 		}
 	}()
