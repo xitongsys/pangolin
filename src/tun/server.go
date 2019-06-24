@@ -133,6 +133,10 @@ func (ts *TunServer) fromTun() {
 					clientProtocol := caddr[:3]
 					if clientProtocol == "tcp" {
 						go func() {
+							defer func() {
+								_ = recover()
+							}()
+							
 							if tunOutput, ok := TunOutputs.Load(caddr); ok {
 								tunOutput.(chan string) <- string(data[:n])
 							}
