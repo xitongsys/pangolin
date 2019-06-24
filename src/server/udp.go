@@ -16,6 +16,7 @@ type UdpServer struct {
 }
 
 func NewUdpServer(addr string, tunServer *tun.TunServer) (*UdpServer, error) {
+	fmt.Println("[UdpServer] started.")
 	add, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("%s is not a valid address", addr)

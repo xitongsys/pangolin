@@ -9,13 +9,13 @@ import (
 	"header"
 )
 
-type PClient struct {
+type UdpClient struct {
 	ServerAdd string
 	UdpConn   net.Conn
 	TunConn   tun.Tun
 }
 
-func NewPClient(sadd string, tname string, mtu int) (*PClient, error) {
+func NewUdpClient(sadd string, tname string, mtu int) (*UdpClient, error) {
 	conn, err := net.Dial("udp", sadd)
 	if err != nil {
 		return nil, err
@@ -25,17 +25,17 @@ func NewPClient(sadd string, tname string, mtu int) (*PClient, error) {
 		return nil, err
 	}
 
-	return &PClient{
+	return &UdpClient{
 		ServerAdd: sadd,
 		UdpConn:   conn,
 		TunConn:   tun,
 	}, nil
 }
 
-func (c *PClient) sendToServer() {
-	data := make([]byte, c.TunConn.GetMtu()*2)
+func (uc *UdpClient) sendToServer() {
+	data := make([]byte, uc.TunConn.GetMtu()*2)
 	for {
-		if n, err := c.TunConn.Read(data); err == nil && n > 0 {
+		if n, err := uc.TunConn.Read(data); err == nil && n > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
 				/*
 				ipv4Header := header.IPv4{}
@@ -54,17 +54,17 @@ func (c *PClient) sendToServer() {
 				*/
 
 				cmpData := comp.CompressGzip(data[:n])
-				c.UdpConn.Write(cmpData)
+				uc.UdpConn.Write(cmpData)
 				fmt.Printf("[send] Len:%d src:%s dst:%s proto:%s\n", n, src, dst, proto)
 			}
 		}
 	}
 }
 
-func (c *PClient) recvFromServer() error {
-	data := make([]byte, c.TunConn.GetMtu()*2)
+func (uc *UdpClient) recvFromServer() error {
+	data := make([]byte, uc.TunConn.GetMtu()*2)
 	for {
-		if n, err := c.UdpConn.Read(data); err == nil && n > 0 {
+		if n, err := uc.UdpConn.Read(data); err == nil && n > 0 {
 			uncmpData, err2 := comp.UncompressGzip(data[:n])
 			if err2 != nil {
 				continue
@@ -86,21 +86,21 @@ func (c *PClient) recvFromServer() error {
 				}
 				*/
 
-				c.TunConn.Write(uncmpData)
+				uc.TunConn.Write(uncmpData)
 				fmt.Printf("[recv] Len:%d src:%s dst:%s proto:%s\n", len(uncmpData), src, dst, proto)
 			}
 		}
 	}
 }
 
-func (c *PClient) Start() error {
-	go c.sendToServer()
-	go c.recvFromServer()
+func (uc *UdpClient) Start() error {
+	go uc.sendToServer()
+	go uc.recvFromServer()
 	return nil
 }
 
-func (c *PClient) Stop() error {
-	c.UdpConn.Close()
-	c.TunConn.Close()
+func (uc *UdpClient) Stop() error {
+	uc.UdpConn.Close()
+	uc.TunConn.Close()
 	return nil
 }
