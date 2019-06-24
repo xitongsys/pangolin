@@ -37,7 +37,7 @@ func (us *UdpServer) sendToClient() {
 	for {
 		if data := us.TunServer.ReadFromUdpChannel(); len(data) > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
-				key := proto + ":" + dst + "->" + src
+				key := proto + ":" + dst + ":" + src
 				if cprotocal, caddr := us.TunServer.GetClientAddr(key); cprotocal!= "" && caddr != "" {
 					if add, err := net.ResolveUDPAddr("udp", caddr); err == nil {
 						cmpData := comp.CompressGzip(data)
