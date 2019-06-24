@@ -45,15 +45,23 @@ func (ts *TcpServer) Stop() {
 
 func (ts *TcpServer) handleRequest(conn net.Conn) {
 	clientAddr := conn.RemoteAddr().String()
+
 	//read from client, write to channel
 	go func() {
 		for {
 			var err error
-			data := util.ReadPacket(conn)
-			if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
-				if protocol, src, dst, err := header.GetBase(data); err == nil {
-					ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
-					fmt.Printf("[TcpServer][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, len(data), src, dst)
+			data, err := util.ReadPacket(conn)
+			if err != nil {
+				ts.TunServer.CloseClient(clientAddr)
+				return
+			}
+
+			if ln := len(data); ln > 0 {
+				if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
+					if protocol, src, dst, err := header.GetBase(data); err == nil {
+						ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
+						fmt.Printf("[TcpServer][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, ln, src, dst)
+					}
 				}
 			}
 		}
@@ -62,10 +70,18 @@ func (ts *TcpServer) handleRequest(conn net.Conn) {
 	//read from channel, write to client
 	go func() {
 		for {
-			data := ts.TunServer.ReadFromChannel(ts.Addr)
-			if protocol, src, dst, err := header.GetBase(data); err == nil {
-				util.WritePacket(conn, comp.CompressGzip(data))
-				fmt.Printf("[TcpServer][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, len(data), src, dst)
+			data, err := ts.TunServer.ReadFromChannel(ts.Addr)
+			if err != nil {
+				return
+			}
+			if ln := len(data); ln > 0 {
+				if protocol, src, dst, err := header.GetBase(data); err == nil {
+					if _, err := util.WritePacket(conn, comp.CompressGzip(data)); err != nil {
+						ts.TunServer.CloseClient(clientAddr)
+						return
+					}
+					fmt.Printf("[TcpServer][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, ln, src, dst)
+				}
 			}
 		}
 	}()

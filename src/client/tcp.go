@@ -54,10 +54,12 @@ func (tc *TcpClient) writeToServer() {
 
 func (tc *TcpClient) readFromServer() error {
 	for {
-		if data, err := comp.UncompressGzip(util.ReadPacket(tc.TcpConn)); err == nil && len(data) > 0 {
-			if protocol, src, dst, err := header.GetBase(data); err == nil {
-				tc.TunConn.Write(data)
-				fmt.Printf("[TcpClient][readFromServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, len(data), src, dst)
+		if data, err := util.ReadPacket(tc.TcpConn); err == nil {
+			if data, err := comp.UncompressGzip(data); err == nil && len(data) > 0 {
+				if protocol, src, dst, err := header.GetBase(data); err == nil {
+					tc.TunConn.Write(data)
+					fmt.Printf("[TcpClient][readFromServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, len(data), src, dst)
+				}
 			}
 		}
 	}

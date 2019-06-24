@@ -20,6 +20,8 @@ type TunServer struct {
 	TunConn Tun
 	//Key: proto:src->dst   Value: clientProtocol:clientIP:clientPort
 	ClientMap *cache.Cache
+
+	mutex sync.Mutex
 }
 
 func NewTunServer(tname string, mtu int) (*TunServer, error){
@@ -49,6 +51,17 @@ func (ts *TunServer) Stop() {
 	fmt.Println("[TunServer] stopped.")
 }
 
+//used for tcp client
+func (ts *TunServer) CloseClient(clientAddr string) {
+	ts.mutex.Lock()
+	key := "tcp:" + clientAddr
+	if value, ok := TunOutputs.Load(key); ok {
+		close(value.(chan string))
+		TunOutputs.Delete(key)
+	}
+	ts.mutex.Unlock()
+}
+
 func (ts *TunServer) GetClientAddr(key string) (protocol string, addr string) {
 	s :=  ts.ClientMap.Get(key)
 	if len(s) <= 4 {
@@ -57,7 +70,7 @@ func (ts *TunServer) GetClientAddr(key string) (protocol string, addr string) {
 	return s[:3], s[4:]
 }
 
-func (ts *TunServer) WriteToChannel(clientProtocol string, clientAddr string, data []byte){
+func (ts *TunServer) WriteToChannel(clientProtocol string, clientAddr string, data []byte) {
 	if proto, src, dst, err := header.GetBase(data); err == nil {
 		key := proto + ":" + src + ":" + dst
 		if ts.ClientMap.Get(key) == "" {
@@ -70,6 +83,7 @@ func (ts *TunServer) WriteToChannel(clientProtocol string, clientAddr string, da
 				TunOutputs.Store(key, make(chan string, OUTPUTCHANNELBUF))
 			}
 		}
+
 		TunInput <- string(data)
 		fmt.Printf("[TunServer][WriteToChannel] protocol:%v, src:%v, dst:%v\n", proto, src, dst)
 	}
@@ -80,13 +94,20 @@ func (ts *TunServer) ReadFromUdpChannel() []byte {
 	return []byte(s)
 }
 
-func (ts *TunServer) ReadFromChannel(clientAddr string) []byte {
-	data := []byte{}
+func (ts *TunServer) ReadFromChannel(clientAddr string) (data []byte, err error) {
+	data = []byte{}
 	if value, ok := TunOutputs.Load("tcp:" + clientAddr); ok {
-		s := <- value.(chan string)
-		data = []byte(s)
+		s, ok := <- value.(chan string)
+		if ok {
+			data = []byte(s)
+		}else{
+			err = fmt.Errorf("Channel error")
+		}
+
+	}else {
+		err = fmt.Errorf("Channel not found")
 	}
-	return data
+	return data, err
 }
 
 func (ts *TunServer) toTun() {
