@@ -39,37 +39,39 @@ func NewTcpClient(sadd string, tname string, mtu int) (*TcpClient, error) {
 	}, nil
 }
 
-func (tc *TcpClient) sendToServer() {
+func (tc *TcpClient) writeToServer() {
 	data := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
 		if n, err := tc.TunConn.Read(data); err == nil && n > 0 {
-			if proto, src, dst, err := header.GetBase(data); err == nil {
+			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				cmpData := comp.CompressGzip(data[:n])
 				util.WritePacket(tc.TcpConn, cmpData)
-				fmt.Printf("[TcpClient][sendToServer] Len:%d src:%s dst:%s proto:%s\n", n, src, dst, proto)
+				fmt.Printf("[TcpClient][writeToServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
 			}
 		}
 	}
 }
 
-func (tc *TcpClient) recvFromServer() error {
+func (tc *TcpClient) readFromServer() error {
 	for {
 		if data, err := comp.UncompressGzip(util.ReadPacket(tc.TcpConn)); err == nil && len(data) > 0 {
-			if proto, src, dst, err := header.GetBase(data); err == nil {
+			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				tc.TunConn.Write(data)
-				fmt.Printf("[TcpClient][recvFromServer] Len:%d src:%s dst:%s proto:%s\n", len(data), src, dst, proto)
+				fmt.Printf("[TcpClient][readFromServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, len(data), src, dst)
 			}
 		}
 	}
 }
 
 func (tc *TcpClient) Start() error {
-	go tc.sendToServer()
-	go tc.recvFromServer()
+	fmt.Println("[TcpClient] started.")
+	go tc.writeToServer()
+	go tc.readFromServer()
 	return nil
 }
 
 func (tc *TcpClient) Stop() error {
+	fmt.Println("[TcpClient] stopped.")
 	tc.TcpConn.Close()
 	tc.TunConn.Close()
 	return nil
