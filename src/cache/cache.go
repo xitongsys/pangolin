@@ -6,11 +6,11 @@ import (
 )
 
 type Item struct {
-	Value     string
+	Value     interface{}
 	Timestamp time.Time
 }
 
-func NewItem(v string, t time.Time) *Item {
+func NewItem(v interface{}, t time.Time) *Item {
 	return &Item{
 		Value:     v,
 		Timestamp: t,
@@ -49,9 +49,9 @@ func NewCache(ttl time.Duration) *Cache {
 	return c
 }
 
-func (c *Cache) Get(key string) string {
+func (c *Cache) Get(key string) interface{} {
 	c.Lock.RLock()
-	res := ""
+	var res interface{}
 	if it, ok := c.Items[key]; ok {
 		res = it.Value
 		it.Timestamp = time.Now()
@@ -60,8 +60,13 @@ func (c *Cache) Get(key string) string {
 	return res
 }
 
-func (c *Cache) Put(key string, value string) {
+func (c *Cache) Put(key string, value interface{}) {
 	c.Lock.Lock()
 	c.Items[key] = NewItem(value, time.Now())
 	c.Lock.Unlock()
+}
+
+func (c *Cache) Clear() {
+	c.Lock.Lock()
+	c.Items = make(map[string]*Item)
 }
