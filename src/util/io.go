@@ -39,6 +39,8 @@ func ReadFull(reader io.Reader, buf []byte){
 	for left > 0 {
 		if n, err := reader.Read(buf[ln - left:]); n > 0 && err == nil {
 			left -= n
+		}else if err != nil {
+			break
 		}
 	}
 }
@@ -48,6 +50,8 @@ func WriteFull(writer io.Writer, buf []byte){
 	for left > 0 {
 		if n, err := writer.Write(buf[ln - left:]); n > 0 && err == nil {
 			left -= n
+		}else if err != nil {
+			break
 		}
 	}
 }

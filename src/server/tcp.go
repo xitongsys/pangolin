@@ -38,16 +38,22 @@ func (ts *TcpServer) Start() {
 	}
 }
 
+func (ts *TcpServer) Stop() {
+	fmt.Println("[TcpServer] stopped.")
+	ts.TcpListener.Close()
+}
+
 func (ts *TcpServer) handleRequest(conn net.Conn) {
+	clientAddr := conn.RemoteAddr().String()
 	//read from client, write to channel
 	go func() {
 		for {
 			var err error
 			data := util.ReadPacket(conn)
 			if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
-				if proto, src, dst, err := header.GetBase(data); err == nil {
+				if protocol, src, dst, err := header.GetBase(data); err == nil {
 					ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
-					fmt.Printf("[TcpServer][readFromClient] Len:%d src:%s dst:%s proto:%s\n", len(data), src, dst, proto)
+					fmt.Printf("[TcpServer][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, len(data), src, dst)
 				}
 			}
 		}
@@ -57,9 +63,9 @@ func (ts *TcpServer) handleRequest(conn net.Conn) {
 	go func() {
 		for {
 			data := ts.TunServer.ReadFromChannel(ts.Addr)
-			if proto, src, dst, err := header.GetBase(data); err == nil {
+			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				util.WritePacket(conn, comp.CompressGzip(data))
-				fmt.Printf("[TcpServer][writeToClient] Len:%d src:%s dst:%s proto:%s\n", len(data), src, dst, proto)
+				fmt.Printf("[TcpServer][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, len(data), src, dst)
 			}
 		}
 	}()

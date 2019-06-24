@@ -16,7 +16,6 @@ type UdpServer struct {
 }
 
 func NewUdpServer(addr string, tunServer *tun.TunServer) (*UdpServer, error) {
-	fmt.Println("[UdpServer] started.")
 	add, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("%s is not a valid address", addr)
@@ -34,16 +33,16 @@ func NewUdpServer(addr string, tunServer *tun.TunServer) (*UdpServer, error) {
 	}, nil
 }
 
-func (us *UdpServer) sendToClient() {
+func (us *UdpServer) writeToClient() {
 	for {
 		if data := us.TunServer.ReadFromUdpChannel(); len(data) > 0 {
-			if proto, src, dst, err := header.GetBase(data); err == nil {
-				key := proto + ":" + dst + ":" + src
+			if protocol, src, dst, err := header.GetBase(data); err == nil {
+				key := protocol + ":" + dst + ":" + src
 				if cprotocal, caddr := us.TunServer.GetClientAddr(key); cprotocal!= "" && caddr != "" {
 					if add, err := net.ResolveUDPAddr("udp", caddr); err == nil {
 						cmpData := comp.CompressGzip(data)
 						us.UdpConn.WriteToUDP(cmpData, add)
-						fmt.Printf("[UdpServer][sendToClient] client:%s src:%s dst:%s proto:%s\n", caddr, src, dst, proto)
+						fmt.Printf("[UdpServer][writeToClient] client:%v, protocol:%v, src:%v, dst:%v\n", caddr, protocol, src, dst)
 					}
 				}
 			}
@@ -51,7 +50,7 @@ func (us *UdpServer) sendToClient() {
 	}
 }
 
-func (us *UdpServer) recvFromClient() {
+func (us *UdpServer) readFromClient() {
 	data := make([]byte, us.TunServer.TunConn.GetMtu()*2)
 	for {
 		if n, caddr, err := us.UdpConn.ReadFromUDP(data); err == nil && n > 0 {
@@ -59,21 +58,23 @@ func (us *UdpServer) recvFromClient() {
 			if errc != nil {
 				continue
 			}
-			if proto, src, dst, err := header.GetBase(uncmpData); err == nil {
+			if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
 				us.TunServer.WriteToChannel("udp", caddr.String(), uncmpData)
-				fmt.Printf("[UdpServer][recvFromClient] client:%s src:%s dst:%s proto:%s\n", caddr.String(), src, dst, proto)
+				fmt.Printf("[UdpServer][readFromClient] client:%v, protocol:%v, src:%v, dst:%v\n", caddr, protocol, src, dst)
 			}
 		}
 	}
 }
 
 func (us *UdpServer) Start() error {
-	go us.sendToClient()
-	go us.recvFromClient()
+	fmt.Println("[UdpServer] started.")
+	go us.writeToClient()
+	go us.readFromClient()
 	return nil
 }
 
 func (us *UdpServer) Stop() error {
+	fmt.Println("[UdpServer] stopped.")
 	us.UdpConn.Close()
 	return nil
 }

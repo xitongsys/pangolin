@@ -32,36 +32,20 @@ func NewUdpClient(sadd string, tname string, mtu int) (*UdpClient, error) {
 	}, nil
 }
 
-func (uc *UdpClient) sendToServer() {
+func (uc *UdpClient) writeToServer() {
 	data := make([]byte, uc.TunConn.GetMtu()*2)
 	for {
 		if n, err := uc.TunConn.Read(data); err == nil && n > 0 {
-			if proto, src, dst, err := header.GetBase(data); err == nil {
-				/*
-				ipv4Header := header.IPv4{}
-				ipv4Header.Unmarshal(data)
-				ipv4Header.Src = header.Str2IP("10.0.0.12")
-				newData := ipv4Header.Marshal()
-				for i := 0; i<len(newData); i++ {
-					data[i] = newData[i]
-				}
-
-				if proto == "tcp" {
-					header.ReplaceTcpCheckSum(data)
-				}else if proto == "udp" {
-					header.ReplaceUdpCheckSum(data)
-				}
-				*/
-
+			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				cmpData := comp.CompressGzip(data[:n])
 				uc.UdpConn.Write(cmpData)
-				fmt.Printf("[send] Len:%d src:%s dst:%s proto:%s\n", n, src, dst, proto)
+				fmt.Printf("[UdpClient][writeToServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
 			}
 		}
 	}
 }
 
-func (uc *UdpClient) recvFromServer() error {
+func (uc *UdpClient) readFromServer() error {
 	data := make([]byte, uc.TunConn.GetMtu()*2)
 	for {
 		if n, err := uc.UdpConn.Read(data); err == nil && n > 0 {
@@ -69,37 +53,23 @@ func (uc *UdpClient) recvFromServer() error {
 			if err2 != nil {
 				continue
 			}
-			if proto, src, dst, err := header.GetBase(uncmpData); err == nil {
-				/*
-				ipv4Header := header.IPv4{}
-				ipv4Header.Unmarshal(uncmpData)
-				ipv4Header.Dst = header.Str2IP("10.0.75.1")
-				newData := ipv4Header.Marshal()
-				for i := 0; i<len(newData); i++ {
-					uncmpData[i] = newData[i]
-				}
-
-				if proto == "tcp" {
-					header.ReplaceTcpCheckSum(uncmpData)
-				}else if proto == "udp" {
-					header.ReplaceUdpCheckSum(uncmpData)
-				}
-				*/
-
+			if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
 				uc.TunConn.Write(uncmpData)
-				fmt.Printf("[recv] Len:%d src:%s dst:%s proto:%s\n", len(uncmpData), src, dst, proto)
+				fmt.Printf("[UdpClient][readFromServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
 			}
 		}
 	}
 }
 
 func (uc *UdpClient) Start() error {
-	go uc.sendToServer()
-	go uc.recvFromServer()
+	fmt.Println("[UdpClient] startted.")
+	go uc.writeToServer()
+	go uc.readFromServer()
 	return nil
 }
 
 func (uc *UdpClient) Stop() error {
+	fmt.Println("[UdpClient] stopped.")
 	uc.UdpConn.Close()
 	uc.TunConn.Close()
 	return nil
