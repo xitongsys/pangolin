@@ -107,6 +107,7 @@ func (ts *TunServer) fromTun() {
 		if n, err := ts.TunConn.Read(data); err==nil && n > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
 				key := proto + ":" + dst + "->" + src
+				fmt.Printf("[TunServer][fromTun] data len: %v, protocol:%v, src:%v, dst:%v\n", n, proto, src, dst)
 				if caddr := ts.ClientMap.Get(key); caddr != "" {
 					clientProtocol := caddr[:3]
 					if clientProtocol == "tcp" {
