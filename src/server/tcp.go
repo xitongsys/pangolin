@@ -7,6 +7,7 @@ import (
 	"tun"
 	"comp"
 	"util"
+	"header"
 )
 
 type TcpServer struct {
@@ -43,15 +44,20 @@ func (ts *TcpServer) handleRequest(conn net.Conn) {
 		var err error
 		data := util.ReadPacket(conn)
 		if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
-			ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
+			if proto, src, dst, err := header.GetBase(data); err == nil {
+				ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
+				fmt.Printf("[TcpServer][readFromClient] Len:%d src:%s dst:%s proto:%s\n", len(data), src, dst, proto)
+			}
 		}
 	}()
 
 	//read from channel, write to client
 	go func() {
 		for {
-			if data := comp.CompressGzip(ts.TunServer.ReadFromChannel(ts.Addr)); len(data)>0 {
-				util.WritePacket(conn, data)
+			data := ts.TunServer.ReadFromChannel(ts.Addr)
+			if proto, src, dst, err := header.GetBase(data); err == nil {
+				util.WritePacket(conn, comp.CompressGzip(data))
+				fmt.Printf("[TcpServer][writeToClient] Len:%d src:%s dst:%s proto:%s\n", len(data), src, dst, proto)
 			}
 		}
 	}()
