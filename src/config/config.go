@@ -9,6 +9,7 @@ type Config struct {
 	Role string `json:"role"`
 	ServerAddr string `json:"server"`
 	TunIp string `json:"tun"`
+	TunName string `json:"tunname"`
 	Dns string `json:"dns"`
 	Mtu int `json:"mtu"`
 	Protocol string `json:"protocol"`
@@ -20,6 +21,7 @@ func NewConfig() *Config {
 		Role: "Server",
 		ServerAddr: "127.0.0.1:12345",
 		TunIp: "10.0.0.2",
+		TunName: "tun0",
 		Dns: "8.8.8.8",
 		Mtu: 1500,
 		Protocol: "tcp",

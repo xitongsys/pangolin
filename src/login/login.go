@@ -2,6 +2,7 @@ package login
 
 import (
 	"net"
+	"fmt"
 
 	"config"
 	"tun"
@@ -11,12 +12,17 @@ type LoginManager struct {
 	//key: clientProtocol:clientIP:clientPort  value: key for AES 
 	Users map[string]*User
 	Tokens map[string]bool
-	Cfg *config.
+	Cfg *config.Config
 	TunServer *tun.TunServer
 	DhcpServer *Dhcp
 }
 
-func NewLoginManager(cfg *config.Config, tunServer *tun.TunServer) *LoginManager {
+func NewLoginManager(cfg *config.Config) (*LoginManager, error) {
+	tunServer, err := tun.NewTunServer(cfg.TunName, cfg.Mtu)
+	if err != nil {
+		return nil, err
+	}
+
 	lm := &LoginManager{
 		Users: map[string]*User{},
 		Tokens: map[string]bool{},
@@ -28,7 +34,7 @@ func NewLoginManager(cfg *config.Config, tunServer *tun.TunServer) *LoginManager
 	for _, token := range cfg.Tokens {
 		lm.Tokens[token] = true
 	}
-	return lm
+	return lm, nil
 }
 
 func (lm *LoginManager) Login(client string, token string) bool {
@@ -56,6 +62,10 @@ func (lm *LoginManager) Logout(client string) {
 	}
 }
 
+func (lm *LoginManager) Start() {
+	lm.TunServer.Start()
+}
+
 func (lm *LoginManager) StartClient(client string, conn net.Conn) {
 	if user, ok := lm.Users[client]; ok {
 		user.Conn = conn
@@ -64,7 +74,7 @@ func (lm *LoginManager) StartClient(client string, conn net.Conn) {
 	}
 }
 
-func (lm *LoginManager) GetUser(client string) *login.User{
+func (lm *LoginManager) GetUser(client string) *User{
 	if user, ok := lm.Users[client]; ok {
 		return user
 	}
