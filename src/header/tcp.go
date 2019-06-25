@@ -73,7 +73,7 @@ func (h *TCP) Unmarshal(bs []byte) error {
 	return nil
 }
 
-func ReplaceTcpCheckSum(bs []byte) error {
+func ReCalTcpCheckSum(bs []byte) error {
 	if len(bs) < 20 {
 		return fmt.Errorf("too short")
 	}

@@ -42,13 +42,13 @@ func (lm *LoginManager) Login(client string, token string) error {
 		if user, ok := lm.Users[client]; ok {
 			user.Close()
 		}
-		tunAddr, err := lm.DhcpServer.GetNewAddr()
+		localTunIp, err := lm.DhcpServer.ApplyIp()
 		if err != nil {
 			fmt.Println("[LoginManager][Login] no enough ip")
 			return fmt.Errorf("no enough ip")
 		}
 
-		user := NewUser(client, tunAddr, token, nil)
+		user := NewUser(client, localTunIp, token, nil)
 		lm.Users[client] = user
 		return nil
 	}

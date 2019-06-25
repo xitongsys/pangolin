@@ -52,7 +52,7 @@ func (h *UDP) Unmarshal(bs []byte) error {
 	return nil
 }
 
-func ReplaceUdpCheckSum(bs []byte) error {
+func ReCalUdpCheckSum(bs []byte) error {
 	if len(bs) < 20 {
 		return fmt.Errorf("too short")
 	}
