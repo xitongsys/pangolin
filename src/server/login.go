@@ -7,6 +7,7 @@ import (
 
 	"config"
 	"tun"
+	"logging"
 )
 //todo: add sync.Mutx for Users change
 type LoginManager struct {
@@ -54,6 +55,8 @@ func (lm *LoginManager) Login(client string, token string) error {
 
 		user := NewUser(client, localTunIp, token, nil, lm.Logout)
 		lm.Users[client] = user
+
+		logging.Log.Info("User login: %v", user)
 		return nil
 	}
 	return fmt.Errorf("token not found")
@@ -65,6 +68,8 @@ func (lm *LoginManager) Logout(client string) {
 	if user, ok := lm.Users[client]; ok {
 		lm.DhcpServer.ReleaseIp(user.LocalTunIp)
 		delete(lm.Users, client)
+		
+		logging.Log.Info("User logout: %v", user)
 	}
 }
 
