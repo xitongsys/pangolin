@@ -44,8 +44,7 @@ func (lm *LoginManager) Login(client string, token string) error {
 		}
 		localTunIp, err := lm.DhcpServer.ApplyIp()
 		if err != nil {
-			fmt.Println("[LoginManager][Login] no enough ip")
-			return fmt.Errorf("no enough ip")
+			return err
 		}
 
 		user := NewUser(client, localTunIp, token, nil)
@@ -58,6 +57,7 @@ func (lm *LoginManager) Login(client string, token string) error {
 func (lm *LoginManager) Logout(client string) {
 	if user, ok := lm.Users[client]; ok {
 		user.Close()
+		lm.DhcpServer.ReleaseIp(user.LocalTunIp)
 		delete(lm.Users, client)
 	}
 }

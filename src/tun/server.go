@@ -1,11 +1,11 @@
 package tun
 
 import (
-	"fmt"
 	"time"
 
 	"cache"
 	"header"
+	"logging"
 )
 
 var TUNCHANBUFFSIZE = 1024
@@ -32,6 +32,7 @@ func NewTunServer(tname string, mtu int) (*TunServer, error){
 }
 
 func (ts *TunServer) Start() {
+	logging.Log.Info("TunServer started")
 	//tun to client
 	go func(){
 		defer func(){
@@ -51,7 +52,7 @@ func (ts *TunServer) Start() {
 							outputChan.(chan string) <- string(data[:n])
 						}()
 
-						fmt.Printf("[TunServer][fromTun] src:%v dst:%v proto:%v\n", src, dst, proto)
+						logging.Log.Debugf("FromTun: src:%v dst:%v proto:%v", src, dst, proto)
 					}
 				}
 			}
@@ -69,8 +70,6 @@ func (ts *TunServer) Start() {
 			}
 		}
 	}()
-
-	fmt.Println("[TunServer] started.")
 }
 
 func (ts *TunServer) StartClient(client string, inputChan chan string, outputChan chan string) {
@@ -88,18 +87,18 @@ func (ts *TunServer) StartClient(client string, inputChan chan string, outputCha
 				key := proto + ":" + src + ":" + dst
 				ts.RouteMap.Put(key, outputChan)
 				ts.InputChan <- data			
-				fmt.Printf("[TunServer][WriteToTun] protocol:%v, src:%v, dst:%v\n", proto, src, dst)
+				logging.Log.Debugf("ToTun: protocol:%v, src:%v, dst:%v", proto, src, dst)
 			}
 		}
 	}()
 }
 
 func (ts *TunServer) Stop() {
+	logging.Log.Info("TunServer stopped")
 	defer func(){
 		recover()
 	}()
 	
 	close(ts.InputChan)
 	ts.RouteMap.Clear()
-	fmt.Println("[TunServer] stopped.")
 }

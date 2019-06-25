@@ -2,11 +2,11 @@ package server
 
 import (
 	"comp"
-	"fmt"
 	"net"
 
 	"config"
 	"util"
+	"logging"
 )
 
 type TcpServer struct {
@@ -31,7 +31,7 @@ func NewTcpServer(cfg *config.Config, loginManager *LoginManager) (*TcpServer, e
 }
 
 func (ts *TcpServer) Start() {
-	fmt.Println("[TcpServer] started.")
+	logging.Log.Info("TcpServer started")
 	go func() {
 		for {
 			if conn, err := ts.TcpListener.Accept(); err == nil {
@@ -42,15 +42,15 @@ func (ts *TcpServer) Start() {
 }
 
 func (ts *TcpServer) Stop() {
-	fmt.Println("[TcpServer] stopped.")
+	logging.Log.Info("TcpServer stopped")
 	ts.TcpListener.Close()
 }
 
 func (ts *TcpServer) handleRequest(conn net.Conn) {
 	client := "tcp:" + conn.RemoteAddr().String()
-	fmt.Printf("[TcpServer] new connected client: %v\n", client)
-	if ts.login(client, conn) != nil {
-		fmt.Printf("[TcpServer][Login] login failed: %v\n", client)
+	logging.Log.Infof("New connected client: %v", client)
+	if err := ts.login(client, conn); err != nil {
+		logging.Log.Errorf("client %v login failed: %v", client, err)
 		return
 	}
 	ts.LoginManager.StartClient(client, conn)
