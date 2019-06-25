@@ -2,7 +2,6 @@ package server
 
 import (
 	"net"
-	"fmt"
 
 	"util"
 	"comp"
@@ -38,17 +37,6 @@ func NewUser(client string, tun string, token string, conn net.Conn, logout func
 		Conn: conn,
 		Logout: logout,
 	}
-}
-
-func (user *User) String() string{
-	res := `{
-		Client: %v,
-		RemoteTunIp: %v,
-		LocalTunIp: %v,
-		Token: %v,
-	}
-`
-	return fmt.Sprintf(res, user.Client, user.RemoteTunIp, user.LocalTunIp, user.Token)
 }
 
 func (user *User) Start() {
