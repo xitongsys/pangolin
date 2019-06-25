@@ -59,5 +59,5 @@ func MaskNumber2Mask(mask int) uint32 {
 	for i := 0; i<mask; i++ {
 		res |= (uint32(1)<<uint32(i))
 	}
-	return res
+	return res<<uint32(32 - mask)
 }

@@ -27,6 +27,7 @@ func NewDhcp(cfg *config.Config) *Dhcp {
 func (dhcp *Dhcp) ApplyIp() (string, error){
 	for ip := dhcp.Ip + 1; ip < ((dhcp.Ip & dhcp.Mask) ^ (^dhcp.Mask)); ip++ {
 		if _, ok := dhcp.UsedIps[ip]; !ok {
+			dhcp.UsedIps[ip] = true
 			return header.IP2Str(ip), nil
 		}
 	}
