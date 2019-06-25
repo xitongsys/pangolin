@@ -9,7 +9,7 @@ type IPv4Pseudo struct {
 	Src      uint32
 	Dst      uint32
 	Reserved uint8
-	Protocol    uint8
+	Protocol uint8
 	Len      uint16
 }
 
@@ -40,7 +40,7 @@ func (h *IPv4Pseudo) Unmarshal(bs []byte) error {
 	}
 	h.Src = binary.BigEndian.Uint32(bs[0:4])
 	h.Dst = binary.BigEndian.Uint32(bs[4:8])
-	h.Reserved = uint8(bs[8])
+	h.Reserved = uint8(0)
 	h.Protocol = uint8(bs[9])
 	h.Len = binary.BigEndian.Uint16(bs[10:12])
 	return nil
