@@ -8,7 +8,6 @@ import (
 	"comp"
 	"header"
 	"cache"
-	"login"
 	"config"
 )
 var UDPCHANBUFFERSIZE = 1024
@@ -16,13 +15,13 @@ var UDPCHANBUFFERSIZE = 1024
 type UdpServer struct {
 	Addr      string
 	UdpConn   *net.UDPConn
-	LoginManager *login.LoginManager
+	LoginManager *LoginManager
 	TunToConnChan chan string
 	ConnToTunChan chan string
 	RouteMap *cache.Cache
 }
 
-func NewUdpServer(cfg *config.Config, loginManager *login.LoginManager) (*UdpServer, error) {
+func NewUdpServer(cfg *config.Config, loginManager *LoginManager) (*UdpServer, error) {
 	addr := cfg.ServerAddr
 	add, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
