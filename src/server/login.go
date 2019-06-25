@@ -56,7 +56,7 @@ func (lm *LoginManager) Login(client string, token string) error {
 		user := NewUser(client, localTunIp, token, nil, lm.Logout)
 		lm.Users[client] = user
 
-		logging.Log.Info("User login: %v", user)
+		logging.Log.Info("User login: client: %v localTunIp: %v", user.Client, user.LocalTunIp)
 		return nil
 	}
 	return fmt.Errorf("token not found")
@@ -68,8 +68,8 @@ func (lm *LoginManager) Logout(client string) {
 	if user, ok := lm.Users[client]; ok {
 		lm.DhcpServer.ReleaseIp(user.LocalTunIp)
 		delete(lm.Users, client)
-		
-		logging.Log.Info("User logout: %v", user)
+
+		logging.Log.Info("User logout: client: %v localTunIp: %v", user.Client, user.LocalTunIp)
 	}
 }
 
