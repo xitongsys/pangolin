@@ -1,5 +1,5 @@
 package server
-
+/*
 import (
 	"fmt"
 	"net"
@@ -81,3 +81,4 @@ func (us *UdpServer) Stop() error {
 	us.UdpConn.Close()
 	return nil
 }
+*/

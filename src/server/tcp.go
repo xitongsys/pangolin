@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"comp"
-	"util"
-	"header"
 	"login"
+	"config"
 )
 
 type TcpServer struct {
@@ -16,14 +14,14 @@ type TcpServer struct {
 	LoginManager *login.LoginManager
 }
 
-func NewTcpServer(addr string, loginManager *login.LoginManager) (*TcpServer, error) {
-	tcpListener, err := net.Listen("tcp", addr)
+func NewTcpServer(cfg *config.Config, loginManager *login.LoginManager) (*TcpServer, error) {
+	tcpListener, err := net.Listen("tcp", cfg.ServerAddr)
 	if err != nil {
 		return nil, err
 	}
 
 	return &TcpServer {
-		Addr: addr,
+		Addr: cfg.ServerAddr,
 		TcpListener: tcpListener,
 		LoginManager: loginManager,
 	}, nil
@@ -46,6 +44,6 @@ func (ts *TcpServer) Stop() {
 func (ts *TcpServer) handleRequest(conn net.Conn) {
 	client := "tcp:" + conn.RemoteAddr().String()
 	fmt.Printf("[TcpServer] new connected client: %v\n", client)
-	ts.LoginManager.StartClient(client)
+	ts.LoginManager.StartClient(client, conn)
 }
 
