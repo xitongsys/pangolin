@@ -3,6 +3,7 @@ package server
 import (
 	"net"
 	"fmt"
+	"sync"
 
 	"config"
 	"tun"
@@ -15,6 +16,8 @@ type LoginManager struct {
 	Cfg *config.Config
 	TunServer *tun.TunServer
 	DhcpServer *Dhcp
+
+	Mutex sync.Mutex
 }
 
 func NewLoginManager(cfg *config.Config) (*LoginManager, error) {
@@ -38,6 +41,8 @@ func NewLoginManager(cfg *config.Config) (*LoginManager, error) {
 }
 
 func (lm *LoginManager) Login(client string, token string) error {
+	defer lm.Mutex.Unlock()
+	lm.Mutex.Lock()
 	if _, ok := lm.Tokens[token]; ok {
 		if user, ok := lm.Users[client]; ok {
 			user.Close()
@@ -47,7 +52,7 @@ func (lm *LoginManager) Login(client string, token string) error {
 			return err
 		}
 
-		user := NewUser(client, localTunIp, token, nil)
+		user := NewUser(client, localTunIp, token, nil, lm.Logout)
 		lm.Users[client] = user
 		return nil
 	}
@@ -55,8 +60,9 @@ func (lm *LoginManager) Login(client string, token string) error {
 }
 
 func (lm *LoginManager) Logout(client string) {
+	defer lm.Mutex.Unlock()
+	lm.Mutex.Lock()
 	if user, ok := lm.Users[client]; ok {
-		user.Close()
 		lm.DhcpServer.ReleaseIp(user.LocalTunIp)
 		delete(lm.Users, client)
 	}

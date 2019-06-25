@@ -21,9 +21,10 @@ type User struct {
 	TunToConnChan chan string
 	ConnToTunChan chan string
 	Conn net.Conn
+	Logout func(client string)
 }
 
-func NewUser(client string, tun string, token string, conn net.Conn) *User {
+func NewUser(client string, tun string, token string, conn net.Conn, logout func(string)) *User {
 	key := string(encrypt.GetAESKey([]byte(token)))
 	return &User {
 		Client: client,
@@ -34,6 +35,7 @@ func NewUser(client string, tun string, token string, conn net.Conn) *User {
 		TunToConnChan: make(chan string, USERCHANBUFFERSIZE),
 		ConnToTunChan: make(chan string, USERCHANBUFFERSIZE),
 		Conn: conn,
+		Logout: logout,
 	}
 }
 
@@ -112,4 +114,6 @@ func (user *User) Close() {
 		}()
 		user.Conn.Close()
 	}()
+
+	user.Logout(user.Client)
 }
