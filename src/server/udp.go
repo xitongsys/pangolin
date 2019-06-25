@@ -9,6 +9,7 @@ import (
 	"header"
 	"cache"
 	"config"
+	"logging"
 )
 var UDPCHANBUFFERSIZE = 1024
 
@@ -44,7 +45,7 @@ func NewUdpServer(cfg *config.Config, loginManager *LoginManager) (*UdpServer, e
 }
 
 func (us *UdpServer) Start() error {
-	fmt.Println("[UdpServer] started.")
+	logging.Log.Info("UdpServer started")
 	us.LoginManager.TunServer.StartClient("udp", us.ConnToTunChan, us.TunToConnChan)
 
 	//from conn to tun
@@ -64,7 +65,7 @@ func (us *UdpServer) Start() error {
 					key := protocol + ":" + src + ":" + dst
 					us.RouteMap.Put(key, caddr.String())
 					us.ConnToTunChan <- string(uncmpData)
-					fmt.Printf("[UdpServer][readFromClient] client:%v, protocol:%v, src:%v, dst:%v\n", caddr, protocol, src, dst)
+					logging.Log.Debugf("UdpFromClient: client:%v, protocol:%v, src:%v, dst:%v", caddr, protocol, src, dst)
 				}
 			}
 		}
@@ -88,7 +89,7 @@ func (us *UdpServer) Start() error {
 						if add, err := net.ResolveUDPAddr("udp", clientAddr); err == nil {
 							cmpData := comp.CompressGzip([]byte(data))
 							us.UdpConn.WriteToUDP(cmpData, add)
-							fmt.Printf("[UdpServer][writeToClient] client:%v, protocol:%v, src:%v, dst:%v\n", clientAddr, protocol, src, dst)
+							logging.Log.Debugf("UdpToClient: client:%v, protocol:%v, src:%v, dst:%v", clientAddr, protocol, src, dst)
 						}
 					}
 				}
@@ -101,7 +102,7 @@ func (us *UdpServer) Start() error {
 }
 
 func (us *UdpServer) Stop() error {
-	fmt.Println("[UdpServer] stopped.")
+	logging.Log.Info("UdpServer stopped")
 
 	go func(){
 		defer func(){

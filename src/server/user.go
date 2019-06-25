@@ -2,12 +2,12 @@ package server
 
 import (
 	"net"
-	"fmt"
 
 	"util"
 	"comp"
 	"header"
 	"encrypt"
+	"logging"
 )
 
 var USERCHANBUFFERSIZE = 1024
@@ -57,7 +57,7 @@ func (user *User) Start() {
 							user.RemoteTunIp = remoteIp
 							Snat(data, user.LocalTunIp)
 							user.ConnToTunChan <- string(data)
-							fmt.Printf("[User][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
+							logging.Log.Debugf("TcpFromClient: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Client, protocol, ln, src, dst)
 						}
 					}
 				}
@@ -82,7 +82,7 @@ func (user *User) Start() {
 							user.Close()
 							return
 						}
-						fmt.Printf("[User][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
+						logging.Log.Debugf("TcpToClient: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Client, protocol, ln, src, dst)
 					}
 				}
 			}
@@ -91,6 +91,7 @@ func (user *User) Start() {
 }
 
 func (user *User) Close() {
+	logging.Log.Infof("Client: %v closed", user.Client)
 	go func(){
 		defer func(){
 			recover()

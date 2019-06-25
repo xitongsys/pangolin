@@ -10,6 +10,7 @@ import (
 	"header"
 	"tun"
 	"util"
+	"logging"
 )
 
 type TcpClient struct {
@@ -53,7 +54,7 @@ func (tc *TcpClient) writeToServer() {
 				if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
 					cmpData := comp.CompressGzip(endata)
 					util.WritePacket(tc.TcpConn, cmpData)
-					fmt.Printf("[TcpClient][writeToServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
+					logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 				}
 			}
 		}
@@ -68,7 +69,7 @@ func (tc *TcpClient) readFromServer() error {
 				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
 						tc.TunConn.Write(data)
-						fmt.Printf("[TcpClient][readFromServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, len(data), src, dst)
+						logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, len(data), src, dst)
 					}
 				}
 			}
@@ -88,7 +89,7 @@ func (tc *TcpClient) login() error {
 }
 
 func (tc *TcpClient) Start() error {
-	fmt.Println("[TcpClient] started.")
+	logging.Log.Info("TcpClient started")
 	if err := tc.login(); err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func (tc *TcpClient) Start() error {
 }
 
 func (tc *TcpClient) Stop() error {
-	fmt.Println("[TcpClient] stopped.")
+	logging.Log.Info("TcpClient stopped")
 	tc.TcpConn.Close()
 	tc.TunConn.Close()
 	return nil
