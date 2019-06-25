@@ -3,8 +3,11 @@ package login
 import (
 	"encrypt"
 	"net"
+	"fmt"
 
 	"util"
+	"comp"
+	"header"
 )
 
 var USERCHANBUFFERSIZE = 1024
@@ -48,8 +51,8 @@ func (user *User) Start() {
 			if ln := len(data); ln > 0 {
 				if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
-						user.OutputChan <- data
-						fmt.Printf("[User][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, ln, src, dst)
+						user.OutputChan <- string(data)
+						fmt.Printf("[User][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
 					}
 				}
 			}
@@ -59,19 +62,19 @@ func (user *User) Start() {
 	//read from channel, write to client
 	go func() {
 		for {
-			data, ok <- user.InputChan
+			data, ok := <- user.InputChan
 			if !ok {
 				user.Close()
 				return
 			}
 
 			if ln := len(data); ln > 0 {
-				if protocol, src, dst, err := header.GetBase(data); err == nil {
-					if _, err := util.WritePacket(user.Conn, comp.CompressGzip(data)); err != nil {
+				if protocol, src, dst, err := header.GetBase([]byte(data)); err == nil {
+					if _, err := util.WritePacket(user.Conn, comp.CompressGzip([]byte(data))); err != nil {
 						user.Close()
 						return
 					}
-					fmt.Printf("[User][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, ln, src, dst)
+					fmt.Printf("[User][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
 				}
 			}
 		}
@@ -82,21 +85,21 @@ func (user *User) Close() {
 	go func(){
 		defer func(){
 			recover()
-		}
+		}()
 		close(user.InputChan)
 	}()
 
 	go func(){
 		defer func(){
 			recover()
-		}
+		}()
 		close(user.OutputChan)
 	}()
 
 	go func(){
 		defer func(){
 			recover()
-		}
+		}()
 		user.Conn.Close()
 	}()
 }

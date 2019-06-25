@@ -6,7 +6,6 @@ import (
 
 	"cache"
 	"header"
-	"login"
 )
 
 var TUNCHANBUFFSIZE = 1024
@@ -21,7 +20,7 @@ type TunServer struct {
 
 func NewTunServer(tname string, mtu int) (*TunServer, error){
 	ts := &TunServer{
-		ClientMap : cache.NewCache(time.Minute * 10),
+		RouteMap : cache.NewCache(time.Minute * 10),
 		InputChan: make(chan string, TUNCHANBUFFSIZE),
 	}
 	if tun, err := NewLinuxTun(tname, mtu); err!=nil {
@@ -43,10 +42,9 @@ func (ts *TunServer) Start() {
 			if n, err := ts.TunConn.Read(data); err==nil && n > 0 {
 				if proto, src, dst, err := header.GetBase(data); err == nil {
 					key := proto + ":" + dst + ":" + src
-					fmt.Printf("[TunServer][fromTun] data len: %v, protocol:%v, src:%v, dst:%v\n", n, proto, src, dst)
 					if outputChan := ts.RouteMap.Get(key); outputChan != nil {
 						outputChan.(chan string) <- string(data[:n])
-						fmt.Printf("[TunServer][fromTun] clientProtocol:%v, client:%v src:%v dst:%v proto:%v\n", clientProtocol, caddr, src, dst, proto)
+						fmt.Printf("[TunServer][fromTun] src:%v dst:%v proto:%v\n", src, dst, proto)
 					}
 				}
 			}
@@ -74,7 +72,7 @@ func (ts *TunServer) StartClient(client string, inputChan chan string, outputCha
 				fmt.Printf("[TunServer][WriteToTun] protocol:%v, src:%v, dst:%v\n", proto, src, dst)
 			}
 		}
-	}
+	}()
 }
 
 func (ts *TunServer) Stop() {
