@@ -99,8 +99,14 @@ func ReCalTcpCheckSum(bs []byte) error {
 	for i := 0; i<len(tcpbs); i+=2 {
 		s +=  uint32(binary.BigEndian.Uint16(tcpbs[i : i+2]))
 	}
-	s = (s >> 16) + (s & 0xffff)
-	checkSum := uint16(s ^ 0xffffffff)
-	binary.BigEndian.PutUint16(tcpbs[16:], checkSum)
+	if len(tcpbs) % 2 == 1 {
+		padding := []byte{tcpbs[len(tcpbs) - 1], byte(0)}
+		s += uint32(binary.BigEndian.Uint16(padding))
+	}
+	for (s>>16) > 0 {
+		s = (s>>16) + s&0xffff
+	}
+
+	binary.BigEndian.PutUint16(tcpbs[16:], ^uint16(s))
 	return nil
 }
