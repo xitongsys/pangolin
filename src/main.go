@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"server"
-	"login"
 	"config"
 )
 
@@ -29,7 +28,7 @@ func main() {
 	fmt.Println(cfg.String())
 
 	if cfg.Role == "server" {
-		loginManager, err := login.NewLoginManager(cfg)
+		loginManager, err := server.NewLoginManager(cfg)
 		if err != nil {
 			os.Exit(-1)
 		}
