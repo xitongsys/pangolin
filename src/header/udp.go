@@ -71,6 +71,10 @@ func ReCalUdpCheckSum(bs []byte) error {
 	udpbs[6] = 0
 	udpbs[7] = 0
 
+	if len(udpbs) % 2 == 0 {
+		udpbs = append(udpbs, byte(0))
+	}
+
 	s := uint32(0)
 	for i := 0; i<len(ippsbs); i+=2 {
 		s +=  uint32(binary.BigEndian.Uint16(ippsbs[i : i+2]))
@@ -78,14 +82,10 @@ func ReCalUdpCheckSum(bs []byte) error {
 	for i := 0; i<len(udpbs); i+=2 {
 		s +=  uint32(binary.BigEndian.Uint16(udpbs[i : i+2]))
 	}
-	if len(udpbs) % 2 == 1 {
-		padding := []byte{udpbs[len(udpbs) - 1], byte(0)}
-		s += uint32(binary.BigEndian.Uint16(padding))
-	}
+	
 	for (s>>16) > 0 {
-		s = (s>>16) + s&0xffff
+		s = (s>>16) + (s&0xffff)
 	}
-
 	binary.BigEndian.PutUint16(udpbs[6:], ^uint16(s))
 	return nil
 }
