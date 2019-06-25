@@ -71,7 +71,7 @@ func ReCalUdpCheckSum(bs []byte) error {
 	udpbs[6] = 0
 	udpbs[7] = 0
 
-	if len(udpbs) % 2 == 0 {
+	if len(udpbs) % 2 == 1 {
 		udpbs = append(udpbs, byte(0))
 	}
 
