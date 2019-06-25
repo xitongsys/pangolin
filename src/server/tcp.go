@@ -50,7 +50,7 @@ func (ts *TcpServer) handleRequest(conn net.Conn) {
 	client := "tcp:" + conn.RemoteAddr().String()
 	logging.Log.Infof("New connected client: %v", client)
 	if err := ts.login(client, conn); err != nil {
-		logging.Log.Errorf("client %v login failed: %v", client, err)
+		logging.Log.Errorf("Client %v login failed: %v", client, err)
 		return
 	}
 	ts.LoginManager.StartClient(client, conn)
