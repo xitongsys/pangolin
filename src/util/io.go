@@ -51,9 +51,6 @@ func ReadFull(reader io.Reader, buf []byte) (n int, err error) {
 		if n, err = reader.Read(buf[ln - left:]); n > 0 && err == nil {
 			left -= n
 		}else if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
 			break
 		}
 	}
@@ -66,9 +63,6 @@ func WriteFull(writer io.Writer, buf []byte) (n int, err error){
 		if n, err = writer.Write(buf[ln - left:]); n > 0 && err == nil {
 			left -= n
 		}else if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
 			break
 		}
 	}
