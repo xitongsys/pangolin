@@ -16,6 +16,7 @@
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
@@ -92,6 +93,28 @@
                 android:ems="10"
                 android:text="8.8.8.8" />
 
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/protocolText"
+                android:layout_width="18dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:text="Protocol" />
+
+            <ToggleButton
+                android:id="@+id/protocolButton"
+                android:layout_width="200dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:text="ToggleButton"
+                android:textOff="TCP"
+                android:textOn="UDP" />
         </LinearLayout>
 
         <LinearLayout
