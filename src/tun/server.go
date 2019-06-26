@@ -70,19 +70,18 @@ func (ts *TunServer) GetClientAddr(key string) (protocol string, addr string) {
 	return s[:3], s[4:]
 }
 
+func (ts *TunServer) CreateTcpChannel(clientAddr string) {
+	key := "tcp:" + clientAddr
+	if value, ok := TunOutputs.Load(key); ok {
+		close(value.(chan string))
+	}
+	TunOutputs.Store(key, make(chan string, OUTPUTCHANNELBUF))
+}
+
 func (ts *TunServer) WriteToChannel(clientProtocol string, clientAddr string, data []byte) {
 	if proto, src, dst, err := header.GetBase(data); err == nil {
 		key := proto + ":" + src + ":" + dst
-		if ts.ClientMap.Get(key) == "" {
-			ts.ClientMap.Put(key, clientProtocol + ":" + clientAddr)
-		}
-
-		key = clientProtocol + ":" + clientAddr
-		if clientProtocol == "tcp" {
-			if _, ok := TunOutputs.Load(key); !ok {
-				TunOutputs.Store(key, make(chan string, OUTPUTCHANNELBUF))
-			}
-		}
+		ts.ClientMap.Put(key, clientProtocol + ":" + clientAddr)
 
 		TunInput <- string(data)
 		fmt.Printf("[TunServer][WriteToChannel] protocol:%v, src:%v, dst:%v\n", proto, src, dst)
