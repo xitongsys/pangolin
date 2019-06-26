@@ -61,7 +61,7 @@ func (ts *TcpServer) handleRequest(conn net.Conn) {
 			if ln := len(data); ln > 0 {
 				if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
-						ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
+						ts.TunServer.WriteToChannel("tcp", clientAddr, data)
 						fmt.Printf("[TcpServer][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, ln, src, dst)
 					}
 				}
