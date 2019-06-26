@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -20,6 +21,7 @@ import java.nio.channels.DatagramChannel;
 
 public class MainActivity extends AppCompatActivity {
     private Button btConn, btDisconn;
+    private ToggleButton protocolButton;
     private EditText editServer, editServerPort, editLocal, editDNS;
     private TextView viewInfo;
     private Thread sendThread;
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
         btConn = findViewById(R.id.connButton);
         btDisconn = findViewById(R.id.disconnButton);
+        protocolButton = findViewById(R.id.protocolButton);
         editServer = findViewById(R.id.serverAddrEdit);
         editServerPort = findViewById(R.id.serverPortEdit);
         editLocal = findViewById(R.id.localAddrEdit);
@@ -44,9 +47,9 @@ public class MainActivity extends AppCompatActivity {
         preferences = getPreferences(Activity.MODE_PRIVATE);
         preEditor = preferences.edit();
 
-        editServer.setText(preferences.getString("serverIP", "192.168.0.1"));
-        editServerPort.setText(preferences.getString("serverPort", "12345"));
-        editLocal.setText(preferences.getString("localIP", "10.0.0.3/24"));
+        editServer.setText(preferences.getString("serverIP", "0.0.0.0"));
+        editServerPort.setText(preferences.getString("serverPort", "12346"));
+        editLocal.setText(preferences.getString("localIP", "10.0.0.33/24"));
         editDNS.setText(preferences.getString("dns", "8.8.8.8"));
 
         btDisconn.setOnClickListener(new View.OnClickListener() {
@@ -73,6 +76,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        protocolButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
     }
 
     @Override
@@ -84,12 +93,17 @@ public class MainActivity extends AppCompatActivity {
             String serverPort = editServerPort.getText().toString();
             String localIp = editLocal.getText().toString();
             String dns = editDNS.getText().toString();
+            String protocol = "tcp";
+            if(this.protocolButton.isChecked()){
+                protocol = "udp";
+            }
 
             intent.setAction("connect");
             intent.putExtra("serverIP", serverIP);
             intent.putExtra("serverPort", Integer.parseInt(serverPort));
             intent.putExtra("localIP", localIp);
             intent.putExtra("dns", dns);
+            intent.putExtra("protocol", protocol);
             startService(intent);
 
             preEditor.putString("serverIP", serverIP);
