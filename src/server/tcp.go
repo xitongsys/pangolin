@@ -45,7 +45,7 @@ func (ts *TcpServer) Stop() {
 
 func (ts *TcpServer) handleRequest(conn net.Conn) {
 	clientAddr := conn.RemoteAddr().String()
-	fmt.Printf("[TcpServer] new connected client: %v\n", conn.RemoteAddr)
+	fmt.Printf("[TcpServer] new connected client: %v\n", conn.RemoteAddr().String())
 
 	//read from client, write to channel
 	go func() {
