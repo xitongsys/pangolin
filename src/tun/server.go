@@ -95,10 +95,13 @@ func (ts *TunServer) ReadFromUdpChannel() []byte {
 
 func (ts *TunServer) ReadFromChannel(clientAddr string) (data []byte, err error) {
 	data = []byte{}
+	fmt.Println("========", clientAddr)
 	if value, ok := TunOutputs.Load("tcp:" + clientAddr); ok {
 		s, ok := <- value.(chan string)
 		if ok {
 			data = []byte(s)
+			fmt.Println("=====2===", clientAddr)
+
 		}else{
 			err = fmt.Errorf("Channel error")
 		}
