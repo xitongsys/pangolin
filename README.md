@@ -7,7 +7,7 @@ Pangolin is a Go implenmentation of TUN VPN.
 1. Run script/server.sh on your VPN server
 2. go run main.go -role server -server 0.0.0.0:12345
 
-### Cient
+### Client
 * Linux host
 1. Run script/client.sh on your Linux host
 2. go run main.go -role client -server \$YOUR_SERVER_ADD
