@@ -1,6 +1,7 @@
 package comp
 
 import (
+	"fmt"
 	"bytes"
 	"io/ioutil"
 	"compress/gzip"
@@ -15,7 +16,12 @@ func reverse(buf []byte) []byte {
 	return res
 }
 
-func UncompressGzip(buf []byte) ([]byte, error) {
+func UncompressGzip(buf []byte) (bs []byte, rerr error) {
+	defer func(){
+		if err := recover(); err != nil {
+			rerr = fmt.Errorf("%v", err)
+		}
+	}()
 	rbuf := bytes.NewReader(buf)
 	gzipReader, _ := gzip.NewReader(rbuf)
 	res, err := ioutil.ReadAll(gzipReader)
