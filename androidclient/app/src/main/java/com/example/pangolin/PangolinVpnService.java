@@ -16,7 +16,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -32,8 +35,10 @@ public class PangolinVpnService extends VpnService {
     static int localPrefixLength = 24;
     static int serverPort;
     static String dns;
-    Thread sendThread,recvThread;
-    Thread sendrecvThread;
+    static String protocol = "tcp";
+    Thread sendrecvThreadUdp;
+    Thread sendThreadTcp, recvThreadTcp;
+    Socket tcpSocket;
     ParcelFileDescriptor localTunnel;
     private PendingIntent pendingIntent;
 
@@ -62,6 +67,7 @@ public class PangolinVpnService extends VpnService {
                 Bundle ex = intent.getExtras();
                 serverIP = ex.getString("serverIP");
                 serverPort = ex.getInt("serverPort");
+                protocol = ex.getString("protocol");
                 String[] localAddrs = ex.getString("localIP").split("/");
                 if(localAddrs.length>=1){
                     localIP = localAddrs[0];
@@ -88,6 +94,135 @@ public class PangolinVpnService extends VpnService {
             Log.e("onStartCommmand", e.toString());
         }
         return START_STICKY;
+    }
+
+    private void initUdpThread() {
+        sendrecvThreadUdp = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    final DatagramChannel udp = DatagramChannel.open();
+
+                    SocketAddress serverAdd = new InetSocketAddress(serverIP, serverPort);
+                    udp.connect(serverAdd);
+                    udp.configureBlocking(false);
+                    PangolinVpnService.this.protect(udp.socket());
+
+                    VpnService.Builder builder = PangolinVpnService.this.new Builder();
+                    builder.setMtu(1500)
+                            .addAddress(localIP, localPrefixLength)
+                            .addRoute("0.0.0.0", 0)
+                            .addDnsServer(dns)
+                            .setSession("Pangolin")
+                            .setConfigureIntent(null);
+                    localTunnel = builder.establish();
+
+
+                    FileInputStream in = new FileInputStream(localTunnel.getFileDescriptor());
+                    FileOutputStream out = new FileOutputStream(localTunnel.getFileDescriptor());
+
+                    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE);
+
+                    while(!isInterrupted()){
+                        try {
+                            int ln = in.read(packet.array());
+
+                            if (ln > 0) {
+                                //Log.i("========send", "===========" + ln);
+                                packet.limit(ln);
+                                udp.write(compress(packet));
+                            }
+                            packet.clear();
+
+                            ln = udp.read(packet);
+
+                            if (ln > 0) {
+                                //Log.i("========recv", "===========" + ln);
+                                packet.limit(ln);
+                                ByteBuffer unpacket = uncompress(packet);
+                                byte[] bs = new byte[unpacket.remaining()];
+                                unpacket.rewind();
+                                unpacket.get(bs, 0, bs.length);
+                                out.write(bs);
+                            }
+                            packet.clear();
+
+                        }catch(Exception e){
+                            Log.e("send/rec", e.toString());
+                        }
+                    }
+
+                }catch(Exception e){
+                    Log.e("send/recv", e.toString());
+                }
+            }
+        };
+
+    }
+
+    private void initTcpThread() {
+        sendThreadTcp = new Thread(){
+            @Override
+            public void run(){
+                try{
+                    FileInputStream in = new FileInputStream(localTunnel.getFileDescriptor());
+                    OutputStream out = tcpSocket.getOutputStream();
+                    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE);
+
+                    while(!isInterrupted()){
+                        try {
+                            int ln = in.read(packet.array());
+                            if (ln > 0) {
+                                packet.limit(ln);
+                                ByteBuffer cpkg = compress(packet);
+                                byte[] cbs = new byte[cpkg.remaining()];
+                                cpkg.get(cbs, 0, cbs.length);
+                                TcpPacket.write(cbs, out);
+                            }
+                            packet.clear();
+
+                        }catch(Exception e){
+                            Log.e("sendThreadTcp", e.toString());
+                        }
+                    }
+
+                }catch (Exception e){
+                    Log.e("sendThreadTcp", e.toString());
+                }
+            }
+        };
+
+        recvThreadTcp = new Thread(){
+            @Override
+            public void run(){
+                try{
+                    FileOutputStream out = new FileOutputStream(localTunnel.getFileDescriptor());
+                    InputStream in = tcpSocket.getInputStream();
+
+                    while(!isInterrupted()){
+                        try {
+                            ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE);
+                            int ln = TcpPacket.read(packet.array(), in);
+                            if (ln > 0) {
+                                //Log.i("========recv", "===========" + ln);
+                                packet.limit(ln);
+                                ByteBuffer unpacket = uncompress(packet);
+                                byte[] bs = new byte[unpacket.remaining()];
+                                unpacket.rewind();
+                                unpacket.get(bs, 0, bs.length);
+                                out.write(bs);
+                            }
+
+                        }catch(Exception e){
+                            Log.e("recvThreadTcp", e.toString());
+                        }
+                    }
+
+                }catch (Exception e){
+                    Log.e("recvThreadTcp", e.toString());
+                }
+            }
+        };
     }
 
     public static ByteBuffer compress(ByteBuffer bf) {
@@ -140,93 +275,81 @@ public class PangolinVpnService extends VpnService {
         return null;
     }
 
-    private void disconnect(){
-        Log.i("disconnect", "disconnecting...");
+    private void closeAll(){
         try {
-            if (sendrecvThread!=null) {
-                sendrecvThread.interrupt();
-                sendrecvThread = null;
+            if (sendThreadTcp != null) {
+                sendThreadTcp.interrupt();
+                sendThreadTcp = null;
             }
+            if (recvThreadTcp != null) {
+                recvThreadTcp.interrupt();
+                recvThreadTcp = null;
+            }
+
+            if (sendrecvThreadUdp != null) {
+                sendrecvThreadUdp.interrupt();
+                sendrecvThreadUdp = null;
+            }
+
             if (localTunnel != null) {
                 localTunnel.close();
                 localTunnel = null;
             }
+        }catch (Exception e){
+            Log.e("closeAll", e.toString());
+        }
+    }
+
+    private void disconnect(){
+        Log.i("disconnect", "disconnecting...");
+        try {
+            closeAll();
             stopForeground(true);
+
         }catch(Exception e){
             Log.e("disconnect", e.toString());
         }
-
     }
 
     private void connect(){
         Log.i("connect", "connecting...");
         Log.i("vpn", serverIP + " " + serverPort + " " + localIP + " " + dns);
         try {
-            if(sendrecvThread!=null) sendrecvThread.interrupt();
-            sendrecvThread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        final DatagramChannel udp = DatagramChannel.open();
-                        SocketAddress serverAdd = new InetSocketAddress(serverIP, serverPort);
-                        udp.connect(serverAdd);
-                        udp.configureBlocking(false);
-                        PangolinVpnService.this.protect(udp.socket());
+            closeAll();
 
-                        VpnService.Builder builder = PangolinVpnService.this.new Builder();
-                        builder.setMtu(1500)
-                                .addAddress(localIP, localPrefixLength)
-                                .addRoute("0.0.0.0", 0)
-                                .addDnsServer(dns)
-                                .setSession("Pangolin")
-                                .setConfigureIntent(null);
-                        localTunnel = builder.establish();
+            if(protocol.equals("udp")){
+                initUdpThread();
+                sendrecvThreadUdp.start();
 
+            }else{
+                initTcpThread();
 
-                        FileInputStream in = new FileInputStream(localTunnel.getFileDescriptor());
-                        FileOutputStream out = new FileOutputStream(localTunnel.getFileDescriptor());
+                new Thread(){
+                    @Override
+                    public void run(){
+                        try {
+                            tcpSocket = new Socket(serverIP, serverPort);
+                            tcpSocket.setKeepAlive(true);
+                            PangolinVpnService.this.protect(tcpSocket);
 
-                        ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE);
+                            VpnService.Builder builder = PangolinVpnService.this.new Builder();
+                            builder.setMtu(1500)
+                                    .addAddress(localIP, localPrefixLength)
+                                    .addRoute("0.0.0.0", 0)
+                                    .addDnsServer(dns)
+                                    .setSession("Pangolin")
+                                    .setConfigureIntent(null);
+                            localTunnel = builder.establish();
 
-                        while(true){
-                            try {
-                                int ln = in.read(packet.array());
+                            sendThreadTcp.start();
+                            recvThreadTcp.start();
 
-                                if (ln > 0) {
-                                    //Log.i("========send", "===========" + ln);
-                                    packet.limit(ln);
-                                    udp.write(compress(packet));
-                                }
-                                packet.clear();
-
-                                ln = udp.read(packet);
-
-                                if (ln > 0) {
-                                    //Log.i("========recv", "===========" + ln);
-                                    packet.limit(ln);
-                                    ByteBuffer unpacket = uncompress(packet);
-                                    byte[] bs = new byte[unpacket.remaining()];
-                                    unpacket.rewind();
-                                    unpacket.get(bs, 0, bs.length);
-                                    out.write(bs);
-                                }
-                                packet.clear();
-
-                            }catch(Exception e){
-                                Log.e("send/rec", e.toString());
-                            }
+                        }catch (Exception e){
+                            Log.e("connect", e.toString());
                         }
-
-                    }catch(Exception e){
-                        Log.e("send/recv", e.toString());
                     }
-                }
-
-            };
-
-            sendrecvThread.start();
-
-
+                }.start();
+            }
         }catch(Exception e){
             Log.e("vpn", e.toString());
         }
