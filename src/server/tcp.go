@@ -72,7 +72,7 @@ func (ts *TcpServer) handleRequest(conn net.Conn) {
 	//read from channel, write to client
 	go func() {
 		for {
-			data, err := ts.TunServer.ReadFromChannel(ts.Addr)
+			data, err := ts.TunServer.ReadFromChannel(clientAddr)
 			fmt.Println("======3========", len(data), err)
 			if err != nil {
 				return
