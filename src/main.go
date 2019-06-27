@@ -17,6 +17,7 @@ var saddr = flag.String("server", "0.0.0.0:12345", "")
 var tunName = flag.String("tun", "tun0", "")
 var mtu = flag.Int("mtu", 1500, "")
 
+
 func main() {
 	flag.Parse()
 	fmt.Println("Welcome to use Pangolin!")
