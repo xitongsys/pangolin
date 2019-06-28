@@ -58,10 +58,13 @@ func (ts *TcpServer) handleRequest(conn net.Conn) {
 func (ts *TcpServer) login(client string, conn net.Conn) error {
 	if data, err := util.ReadPacket(conn); err != nil{
 		return err
+
 	}else{
 		if data, err = comp.UncompressGzip(data); err != nil || len(data)<=0 {
 			return err
+
 		}else{
+			fmt.Println("======", string(data))
 			return ts.LoginManager.Login(client, string(data))
 		}
 	}

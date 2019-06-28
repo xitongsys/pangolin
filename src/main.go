@@ -15,13 +15,18 @@ import (
 var configFile = flag.String("c", "cfg.json", "")
 
 func main() {
+	var err error
 	fmt.Println("Welcome to use Pangolin!")
+	defer func(){
+		fmt.Println("[main] error: ", err)
+	}()
 
 	flag.Parse()
 	cfg, err := config.NewConfigFromFile(*configFile)
 	if err != nil {
 		os.Exit(-1)
 	}
+	fmt.Println(cfg.String())
 
 	if cfg.Role == "server" {
 		loginManager, err := login.NewLoginManager(cfg)

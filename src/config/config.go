@@ -47,4 +47,9 @@ func (cfg *Config) Marshal() ([]byte, error) {
 	return json.Marshal(cfg)
 }
 
+func (cfg *Config) String() string {
+	res, _ := cfg.Marshal()
+	return string(res)
+}
+
 
