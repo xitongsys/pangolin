@@ -46,7 +46,7 @@ func NewUdpServer(cfg *config.Config, loginManager *login.LoginManager) (*UdpSer
 
 func (us *UdpServer) Start() error {
 	fmt.Println("[UdpServer] started.")
-	us.LoginManager.TunServer.StartClient("udp", &us.ConnToTunChan, &us.TunToConnChan)
+	us.LoginManager.TunServer.StartClient("udp", us.ConnToTunChan, us.TunToConnChan)
 
 	//from conn to tun
 	go func(){
