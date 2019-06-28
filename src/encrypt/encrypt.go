@@ -8,30 +8,42 @@ import (
 	"fmt"
 )
 
-func padding(src []byte, blockSize int) ([]byte, int) {
-	padNum := blockSize - len(src) % blockSize
-	pad := bytes.Repeat([]byte{byte(0)}, padNum)
-	return append(src, pad...), padNum
+func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
+    padding := blockSize - len(ciphertext) % blockSize
+    padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+    return append(ciphertext, padtext...)
 }
 
-func unpadding(src []byte, padNum int) []byte {
-	return src[:len(src) - padNum]
+func PKCS7UnPadding(origData []byte) []byte {
+    length := len(origData)
+    unpadding := int(origData[length-1])
+    return origData[:(length - unpadding)]
 }
 
-func EncryptAES(src []byte, key []byte) []byte {
-	block,_ := aes.NewCipher(key)
-	src, padNum := padding(src, block.BlockSize())
-	blockMode := cipher.NewCBCEncrypter(block, key)
-	blockMode.CryptBlocks(src, src)
-	return append(src, byte(padNum))
+func EncryptAES(origData, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+    blockSize := block.BlockSize()
+    origData = PKCS7Padding(origData, blockSize)
+    blockMode := cipher.NewCBCEncrypter(block, key[:blockSize])
+    crypted := make([]byte, len(origData))
+    blockMode.CryptBlocks(crypted, origData)
+    return crypted, nil
 }
 
-func DecryptAES(src []byte, key[]byte) []byte {
-	src, padNum := src[:len(src)-1], int(src[len(src)-1])
-	block, _ := aes.NewCipher(key)
-	blockMode := cipher.NewCBCDecrypter(block, key)
-	blockMode.CryptBlocks(src, src)
-	return src[:len(src)-padNum]
+func DecryptAES(crypted, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+    blockSize := block.BlockSize()
+    blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
+    origData := make([]byte, len(crypted))
+    blockMode.CryptBlocks(origData, crypted)
+    origData = PKCS7UnPadding(origData)
+    return origData, nil
 }
 
 func GetAESKey(key []byte) []byte {

@@ -49,10 +49,11 @@ func (user *User) Start() {
 
 			if ln := len(data); ln > 0 {
 				if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
-					data = encrypt.DecryptAES(data, encryptKey)
-					if protocol, src, dst, err := header.GetBase(data); err == nil {
-						user.ConnToTunChan <- string(data)
-						fmt.Printf("[User][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
+					if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
+						if protocol, src, dst, err := header.GetBase(data); err == nil {
+							user.ConnToTunChan <- string(data)
+							fmt.Printf("[User][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
+						}
 					}
 				}
 			}
@@ -70,12 +71,13 @@ func (user *User) Start() {
 
 			if ln := len(data); ln > 0 {
 				if protocol, src, dst, err := header.GetBase([]byte(data)); err == nil {
-					endata := encrypt.EncryptAES([]byte(data), encryptKey)
-					if _, err := util.WritePacket(user.Conn, comp.CompressGzip(endata)); err != nil {
-						user.Close()
-						return
+					if endata, err := encrypt.EncryptAES([]byte(data), encryptKey); err == nil {
+						if _, err := util.WritePacket(user.Conn, comp.CompressGzip(endata)); err != nil {
+							user.Close()
+							return
+						}
+						fmt.Printf("[User][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
 					}
-					fmt.Printf("[User][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
 				}
 			}
 		}
