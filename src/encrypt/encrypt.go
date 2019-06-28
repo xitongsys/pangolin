@@ -1,6 +1,7 @@
 package encrypt
 
 import (
+	"fmt"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
@@ -18,7 +19,12 @@ func PKCS7UnPadding(origData []byte) []byte {
     return origData[:(length - unpadding)]
 }
 
-func EncryptAES(origData, key []byte) ([]byte, error) {
+func EncryptAES(origData, key []byte) (bs []byte, rerr error) {
+	defer func() {
+		recover()
+		rerr = fmt.Errorf("Encrypt failed")
+	}()
+
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, err
@@ -31,7 +37,12 @@ func EncryptAES(origData, key []byte) ([]byte, error) {
     return crypted, nil
 }
 
-func DecryptAES(crypted, key []byte) ([]byte, error) {
+func DecryptAES(crypted, key []byte) (bs []byte, rerr error) {
+	defer func() {
+		recover()
+		rerr = fmt.Errorf("Decrypt failed")
+	}()
+
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, err
