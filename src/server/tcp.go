@@ -1,11 +1,13 @@
 package server
 
 import (
+	"comp"
 	"fmt"
 	"net"
 
 	"login"
 	"config"
+	"util"
 )
 
 type TcpServer struct {
@@ -44,7 +46,22 @@ func (ts *TcpServer) Stop() {
 func (ts *TcpServer) handleRequest(conn net.Conn) {
 	client := "tcp:" + conn.RemoteAddr().String()
 	fmt.Printf("[TcpServer] new connected client: %v\n", client)
-	
+	if ts.login(client, conn) != nil {
+		fmt.Printf("[TcpServer][Login] login failed: %v\n", client)
+		return 
+	}
 	ts.LoginManager.StartClient(client, conn)
+}
+
+func (ts *TcpServer) login(client string, conn net.Conn) error {
+	if data, err := util.ReadPacket(conn); err != nil{
+		return err
+	}else{
+		if data, err = comp.UncompressGzip(data); err != nil || len(data)<=0 {
+			return err
+		}else{
+			return ts.LoginManager.Login(client, string(data))
+		}
+	}
 }
 

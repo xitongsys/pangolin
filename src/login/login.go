@@ -37,7 +37,7 @@ func NewLoginManager(cfg *config.Config) (*LoginManager, error) {
 	return lm, nil
 }
 
-func (lm *LoginManager) Login(client string, token string) bool {
+func (lm *LoginManager) Login(client string, token string) error {
 	if _, ok := lm.Tokens[token]; ok {
 		if user, ok := lm.Users[client]; ok {
 			user.Close()
@@ -45,14 +45,14 @@ func (lm *LoginManager) Login(client string, token string) bool {
 		tunAddr, err := lm.DhcpServer.GetNewAddr()
 		if err != nil {
 			fmt.Println("[LoginManager][Login] no enough ip")
-			return false
+			return fmt.Errorf("no enough ip")
 		}
 
 		user := NewUser(client, tunAddr, token, nil)
 		lm.Users[client] = user
-		return true
+		return nil
 	}
-	return false
+	return fmt.Errorf("token not found")
 }
 
 func (lm *LoginManager) Logout(client string) {

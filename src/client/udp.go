@@ -7,6 +7,7 @@ import (
 	"comp"
 	"tun"
 	"header"
+	"config"
 )
 
 type UdpClient struct {
@@ -15,8 +16,9 @@ type UdpClient struct {
 	TunConn   tun.Tun
 }
 
-func NewUdpClient(sadd string, tname string, mtu int) (*UdpClient, error) {
-	conn, err := net.Dial("udp", sadd)
+func NewUdpClient(cfg *config.Config) (*UdpClient, error) {
+	saddr, tname, mtu := cfg.ServerAddr, cfg.TunName, cfg.Mtu
+	conn, err := net.Dial("udp", saddr)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +28,7 @@ func NewUdpClient(sadd string, tname string, mtu int) (*UdpClient, error) {
 	}
 
 	return &UdpClient{
-		ServerAdd: sadd,
+		ServerAdd: saddr,
 		UdpConn:   conn,
 		TunConn:   tun,
 	}, nil

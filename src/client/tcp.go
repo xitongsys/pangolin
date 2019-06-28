@@ -8,16 +8,19 @@ import (
 	"tun"
 	"header"
 	"util"
+	"config"
 )
 
 type TcpClient struct {
 	ServerAdd string
+	Cfg *config.Config
 	TcpConn   *net.TCPConn
 	TunConn   tun.Tun
 }
 
-func NewTcpClient(sadd string, tname string, mtu int) (*TcpClient, error) {
-	addr, err := net.ResolveTCPAddr("", sadd)
+func NewTcpClient(cfg *config.Config) (*TcpClient, error) {
+	saddr, tname, mtu := cfg.ServerAddr, cfg.TunName, cfg.Mtu
+	addr, err := net.ResolveTCPAddr("", saddr)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +36,8 @@ func NewTcpClient(sadd string, tname string, mtu int) (*TcpClient, error) {
 	}
 
 	return &TcpClient{
-		ServerAdd: sadd,
+		ServerAdd: saddr,
+		Cfg: cfg,
 		TcpConn:   conn,
 		TunConn:   tun,
 	}, nil
@@ -65,8 +69,21 @@ func (tc *TcpClient) readFromServer() error {
 	}
 }
 
+func (tc *TcpClient) login() error {
+	if len(tc.Cfg.Tokens) <= 0 {
+		return fmt.Errorf("no token provided")
+	}
+	if _, err := util.WritePacket(tc.TcpConn, []byte(tc.Cfg.Tokens[0])); err!=nil{
+		return err
+	}
+	return nil
+}
+
 func (tc *TcpClient) Start() error {
 	fmt.Println("[TcpClient] started.")
+	if err := tc.login(); err != nil {
+		return err
+	}
 	go tc.writeToServer()
 	go tc.readFromServer()
 	return nil

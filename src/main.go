@@ -22,24 +22,29 @@ func main() {
 		os.Exit(-1)
 	}
 
-	loginManager, err := login.NewLoginManager(cfg)
-	if err != nil {
-		os.Exit(-1)
-	}
-	
-	tcpServer, err := server.NewTcpServer(cfg, loginManager)
-	if err != nil {
-		os.Exit(-1)
-	}
+	if cfg.Role == "server" {
+		loginManager, err := login.NewLoginManager(cfg)
+		if err != nil {
+			os.Exit(-1)
+		}
+		
+		tcpServer, err := server.NewTcpServer(cfg, loginManager)
+		if err != nil {
+			os.Exit(-1)
+		}
 
-	udpServer, err := server.NewUdpServer(cfg, loginManager)
-	if err != nil {
-		os.Exit(-1)
-	}
+		udpServer, err := server.NewUdpServer(cfg, loginManager)
+		if err != nil {
+			os.Exit(-1)
+		}
 
-	loginManager.Start()
-	tcpServer.Start()
-	udpServer.Start()
+		loginManager.Start()
+		tcpServer.Start()
+		udpServer.Start()
+
+	}else{
+		
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
