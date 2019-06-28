@@ -5,16 +5,16 @@ import (
 	"net"
 
 	"comp"
-	"tun"
-	"header"
-	"util"
 	"config"
 	"encrypt"
+	"header"
+	"tun"
+	"util"
 )
 
 type TcpClient struct {
 	ServerAdd string
-	Cfg *config.Config
+	Cfg       *config.Config
 	TcpConn   *net.TCPConn
 	TunConn   tun.Tun
 }
@@ -38,7 +38,7 @@ func NewTcpClient(cfg *config.Config) (*TcpClient, error) {
 
 	return &TcpClient{
 		ServerAdd: saddr,
-		Cfg: cfg,
+		Cfg:       cfg,
 		TcpConn:   conn,
 		TunConn:   tun,
 	}, nil
@@ -49,10 +49,9 @@ func (tc *TcpClient) writeToServer() {
 	data := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
 		if n, err := tc.TunConn.Read(data); err == nil && n > 0 {
-			data = data[:n]
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
-				if data, err = encrypt.EncryptAES(data, encryptKey); err == nil {
-					cmpData := comp.CompressGzip(data)
+				if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
+					cmpData := comp.CompressGzip(endata)
 					util.WritePacket(tc.TcpConn, cmpData)
 					fmt.Printf("[TcpClient][writeToServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
 				}
@@ -82,7 +81,7 @@ func (tc *TcpClient) login() error {
 		return fmt.Errorf("no token provided")
 	}
 	data := comp.CompressGzip([]byte(tc.Cfg.Tokens[0]))
-	if _, err := util.WritePacket(tc.TcpConn, data); err!=nil{
+	if _, err := util.WritePacket(tc.TcpConn, data); err != nil {
 		return err
 	}
 	return nil
