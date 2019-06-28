@@ -9,6 +9,7 @@ import (
 	"header"
 	"util"
 	"config"
+	"encrypt"
 )
 
 type TcpClient struct {
@@ -48,7 +49,9 @@ func (tc *TcpClient) writeToServer() {
 	for {
 		if n, err := tc.TunConn.Read(data); err == nil && n > 0 {
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
-				cmpData := comp.CompressGzip(data[:n])
+				data = data[:n]
+				data = encrypt.EncryptAES(data, []byte(tc.Cfg.Tokens[0]))
+				cmpData := comp.CompressGzip(data)
 				util.WritePacket(tc.TcpConn, cmpData)
 				fmt.Printf("[TcpClient][writeToServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
 			}
@@ -60,6 +63,7 @@ func (tc *TcpClient) readFromServer() error {
 	for {
 		if data, err := util.ReadPacket(tc.TcpConn); err == nil {
 			if data, err := comp.UncompressGzip(data); err == nil && len(data) > 0 {
+				data = encrypt.DecryptAES(data, []byte(tc.Cfg.Tokens[0]))
 				if protocol, src, dst, err := header.GetBase(data); err == nil {
 					tc.TunConn.Write(data)
 					fmt.Printf("[TcpClient][readFromServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, len(data), src, dst)
