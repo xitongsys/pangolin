@@ -19,6 +19,7 @@ func unpadding(src []byte, padNum int) []byte {
 }
 
 func EncryptAES(src []byte, key []byte) []byte {
+	key = GetAESKey(key)
 	block,_ := aes.NewCipher(key)
 	src, padNum := padding(src, block.BlockSize())
 	blockMode := cipher.NewCBCEncrypter(block, key)
@@ -27,6 +28,7 @@ func EncryptAES(src []byte, key []byte) []byte {
 }
 
 func DecryptAES(src []byte, key[]byte) []byte {
+	key = GetAESKey(key)
 	src, padNum := src[:len(src)-1], int(src[len(src)-1])
 	block, _ := aes.NewCipher(key)
 	blockMode := cipher.NewCBCDecrypter(block, key)
