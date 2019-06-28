@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"
-	"fmt"
 )
 
 func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
@@ -47,6 +45,9 @@ func DecryptAES(crypted, key []byte) ([]byte, error) {
 }
 
 func GetAESKey(key []byte) []byte {
-	h := md5.Sum(key)
-	return []byte(fmt.Sprintf("%x", h))[:16]
+	res := make([]byte, 16)
+	for i:=0; i<16 && i<len(key); i++{
+		res[i] = key[i]
+	}
+	return res
 }
