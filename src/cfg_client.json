@@ -5,6 +5,6 @@
     "tunname": "tun0",
     "dns": "8.8.8.8",
     "mtu": 1500,
-    "protocol": "udp",
+    "protocol": "tcp",
     "tokens": ["abcd"]
 }
