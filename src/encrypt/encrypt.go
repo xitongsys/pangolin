@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 )
 
@@ -21,6 +22,7 @@ func PKCS7UnPadding(origData []byte) []byte {
 }
 
 func EncryptAES(origData, key []byte) ([]byte, error) {
+	origData = []byte(base64.StdEncoding.EncodeToString(origData))
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, err
@@ -42,8 +44,9 @@ func DecryptAES(crypted, key []byte) ([]byte, error) {
     blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
     origData := make([]byte, len(crypted))
     blockMode.CryptBlocks(origData, crypted)
-    origData = PKCS7UnPadding(origData)
-    return origData, nil
+	origData = PKCS7UnPadding(origData)
+	origData, err = base64.StdEncoding.DecodeString(string(origData))
+    return origData, err
 }
 
 func GetAESKey(key []byte) []byte {
