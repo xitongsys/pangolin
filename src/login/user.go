@@ -36,6 +36,7 @@ func NewUser(client string, tun string, token string, conn net.Conn) *User {
 }
 
 func (user *User) Start() {
+	encryptKey := encrypt.GetAESKey([]byte(user.Token))
 	//read from client, write to channel
 	go func() {
 		for {
@@ -48,7 +49,7 @@ func (user *User) Start() {
 
 			if ln := len(data); ln > 0 {
 				if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
-					data = encrypt.DecryptAES(data, []byte(user.Token))
+					data = encrypt.DecryptAES(data, encryptKey)
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
 						user.ConnToTunChan <- string(data)
 						fmt.Printf("[User][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
@@ -69,7 +70,7 @@ func (user *User) Start() {
 
 			if ln := len(data); ln > 0 {
 				if protocol, src, dst, err := header.GetBase([]byte(data)); err == nil {
-					endata := encrypt.EncryptAES([]byte(data), []byte(user.Token))
+					endata := encrypt.EncryptAES([]byte(data), encryptKey)
 					if _, err := util.WritePacket(user.Conn, comp.CompressGzip(endata)); err != nil {
 						user.Close()
 						return
