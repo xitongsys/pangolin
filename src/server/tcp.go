@@ -31,11 +31,13 @@ func NewTcpServer(cfg *config.Config, loginManager *login.LoginManager) (*TcpSer
 
 func (ts *TcpServer) Start() {
 	fmt.Println("[TcpServer] started.")
-	for {
-		if conn, err := ts.TcpListener.Accept(); err == nil{
-			go ts.handleRequest(conn)
+	go func() {
+		for {
+			if conn, err := ts.TcpListener.Accept(); err == nil{
+				go ts.handleRequest(conn)
+			}
 		}
-	}
+	}()
 }
 
 func (ts *TcpServer) Stop() {
