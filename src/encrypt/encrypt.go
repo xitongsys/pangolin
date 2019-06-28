@@ -22,7 +22,6 @@ func PKCS7UnPadding(origData []byte) []byte {
 }
 
 func EncryptAES(origData, key []byte) ([]byte, error) {
-	return origData, nil
 	origData = []byte(base64.StdEncoding.EncodeToString(origData))
     block, err := aes.NewCipher(key)
     if err != nil {
@@ -37,7 +36,6 @@ func EncryptAES(origData, key []byte) ([]byte, error) {
 }
 
 func DecryptAES(crypted, key []byte) ([]byte, error) {
-	return crypted, nil
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, err
