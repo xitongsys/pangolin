@@ -70,7 +70,7 @@ func (lm *LoginManager) StartClient(client string, conn net.Conn) {
 	if user, ok := lm.Users[client]; ok {
 		user.Conn = conn
 		user.Start()
-		lm.TunServer.StartClient(client, &user.ConnToTunChan, &user.TunToConnChan)
+		lm.TunServer.StartClient(client, user.ConnToTunChan, user.TunToConnChan)
 	}
 }
 
