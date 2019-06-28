@@ -57,9 +57,10 @@ func (ts *TunServer) Start() {
 		defer func(){
 			recover()
 		}()
-
-		if data, ok := <- ts.InputChan; ok && len(data)>0 {
-			ts.TunConn.Write([]byte(data))
+		for {
+			if data, ok := <- ts.InputChan; ok && len(data)>0 {
+				ts.TunConn.Write([]byte(data))
+			}
 		}
 	}()
 
