@@ -32,6 +32,7 @@ func NewTunServer(tname string, mtu int) (*TunServer, error){
 }
 
 func (ts *TunServer) Start() {
+	//tun to client
 	go func(){
 		defer func(){
 			recover()
@@ -48,6 +49,17 @@ func (ts *TunServer) Start() {
 					}
 				}
 			}
+		}
+	}()
+
+	//chan to tun
+	go func() {
+		defer func(){
+			recover()
+		}()
+
+		if data, ok := <- ts.InputChan; ok && len(data)>0 {
+			ts.TunConn.Write([]byte(data))
 		}
 	}()
 
