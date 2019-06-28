@@ -21,8 +21,9 @@ func PKCS7UnPadding(origData []byte) []byte {
 
 func EncryptAES(origData, key []byte) (bs []byte, rerr error) {
 	defer func() {
-		recover()
-		rerr = fmt.Errorf("Encrypt failed")
+		if r := recover(); r!=nil {
+			rerr = fmt.Errorf("Encrypt failed")
+		}
 	}()
 
     block, err := aes.NewCipher(key)
@@ -39,8 +40,9 @@ func EncryptAES(origData, key []byte) (bs []byte, rerr error) {
 
 func DecryptAES(crypted, key []byte) (bs []byte, rerr error) {
 	defer func() {
-		recover()
-		rerr = fmt.Errorf("Decrypt failed")
+		if r := recover(); r!=nil{
+			rerr = fmt.Errorf("Decrypt failed")
+		}
 	}()
 
     block, err := aes.NewCipher(key)
