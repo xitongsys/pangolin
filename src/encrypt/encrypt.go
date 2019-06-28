@@ -60,5 +60,8 @@ func GetAESKey(key []byte) []byte {
 	for i:=0; i<16 && i<len(key); i++{
 		res[i] = key[i]
 	}
+	for i:=len(key); i<16; i++ {
+		res[i] = '0'
+	}
 	return res
 }
