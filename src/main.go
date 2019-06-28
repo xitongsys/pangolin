@@ -32,8 +32,14 @@ func main() {
 		os.Exit(-1)
 	}
 
+	udpServer, err := server.NewUdpServer(cfg, loginManager)
+	if err != nil {
+		os.Exit(-1)
+	}
+
 	loginManager.Start()
 	tcpServer.Start()
+	udpServer.Start()
 
 	var wg sync.WaitGroup
 	wg.Add(1)

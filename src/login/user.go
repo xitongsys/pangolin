@@ -17,10 +17,8 @@ type User struct {
 	TunAddr string
 	Token string
 	Key string
-	//from tun to conn
-	InputChan chan string
-	//from conn to tun
-	OutputChan chan string
+	TunToConnChan chan string
+	ConnToTunChan chan string
 	Conn net.Conn
 }
 
@@ -31,8 +29,8 @@ func NewUser(client string, tun string, token string, conn net.Conn) *User {
 		TunAddr: tun,
 		Token: token,
 		Key: key,
-		InputChan: make(chan string, USERCHANBUFFERSIZE),
-		OutputChan: make(chan string, USERCHANBUFFERSIZE),
+		TunToConnChan: make(chan string, USERCHANBUFFERSIZE),
+		ConnToTunChan: make(chan string, USERCHANBUFFERSIZE),
 		Conn: conn,
 	}
 }
@@ -51,7 +49,7 @@ func (user *User) Start() {
 			if ln := len(data); ln > 0 {
 				if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
-						user.OutputChan <- string(data)
+						user.ConnToTunChan <- string(data)
 						fmt.Printf("[User][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", user.Client, protocol, ln, src, dst)
 					}
 				}
@@ -62,7 +60,7 @@ func (user *User) Start() {
 	//read from channel, write to client
 	go func() {
 		for {
-			data, ok := <- user.InputChan
+			data, ok := <- user.TunToConnChan
 			if !ok {
 				user.Close()
 				return
@@ -86,14 +84,14 @@ func (user *User) Close() {
 		defer func(){
 			recover()
 		}()
-		close(user.InputChan)
+		close(user.TunToConnChan)
 	}()
 
 	go func(){
 		defer func(){
 			recover()
 		}()
-		close(user.OutputChan)
+		close(user.ConnToTunChan)
 	}()
 
 	go func(){
