@@ -12,6 +12,7 @@ import (
 
 type TcpServer struct {
 	Addr      string
+	Cfg *config.Config
 	TcpListener	 net.Listener
 	LoginManager *login.LoginManager
 }
@@ -24,6 +25,7 @@ func NewTcpServer(cfg *config.Config, loginManager *login.LoginManager) (*TcpSer
 
 	return &TcpServer {
 		Addr: cfg.ServerAddr,
+		Cfg: cfg,
 		TcpListener: tcpListener,
 		LoginManager: loginManager,
 	}, nil
