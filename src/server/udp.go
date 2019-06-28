@@ -63,7 +63,7 @@ func (us *UdpServer) Start() error {
 				}
 				if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
 					key := protocol + ":" + src + ":" + dst
-					us.RouteMap.Put(key, caddr)
+					us.RouteMap.Put(key, caddr.String())
 					us.ConnToTunChan <- string(uncmpData)
 					fmt.Printf("[UdpServer][readFromClient] client:%v, protocol:%v, src:%v, dst:%v\n", caddr, protocol, src, dst)
 				}
