@@ -44,6 +44,7 @@ func (ts *TcpServer) Stop() {
 func (ts *TcpServer) handleRequest(conn net.Conn) {
 	client := "tcp:" + conn.RemoteAddr().String()
 	fmt.Printf("[TcpServer] new connected client: %v\n", client)
+	
 	ts.LoginManager.StartClient(client, conn)
 }
 
