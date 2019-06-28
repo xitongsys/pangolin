@@ -49,8 +49,8 @@ func (tc *TcpClient) writeToServer() {
 	data := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
 		if n, err := tc.TunConn.Read(data); err == nil && n > 0 {
+			data = data[:n]
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
-				data = data[:n]
 				data = encrypt.EncryptAES(data, encryptKey)
 				cmpData := comp.CompressGzip(data)
 				util.WritePacket(tc.TcpConn, cmpData)
