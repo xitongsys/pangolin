@@ -44,7 +44,13 @@ func (ts *TunServer) Start() {
 				if proto, src, dst, err := header.GetBase(data); err == nil {
 					key := proto + ":" + dst + ":" + src
 					if outputChan := ts.RouteMap.Get(key); outputChan != nil {
-						outputChan.(chan string) <- string(data[:n])
+						go func() {
+							defer func(){
+								recover()
+							}()
+							outputChan.(chan string) <- string(data[:n])
+						}()
+
 						fmt.Printf("[TunServer][fromTun] src:%v dst:%v proto:%v\n", src, dst, proto)
 					}
 				}
