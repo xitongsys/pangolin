@@ -1,6 +1,7 @@
 package main
 
 import (
+	"client"
 	"flag"
 	"fmt"
 	"os"
@@ -43,7 +44,23 @@ func main() {
 		udpServer.Start()
 
 	}else{
-		
+		if cfg.Protocol == "tcp" {
+			tcpClient, err := client.NewTcpClient(cfg)
+			if err != nil {
+				os.Exit(-1)
+			}
+
+			tcpClient.Start()
+
+		} else{
+			udpClient, err := client.NewUdpClient(cfg)
+			if err != nil {
+				os.Exit(-1)
+			}
+
+			udpClient.Start()
+		}
+
 	}
 
 	var wg sync.WaitGroup
