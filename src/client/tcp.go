@@ -73,7 +73,8 @@ func (tc *TcpClient) login() error {
 	if len(tc.Cfg.Tokens) <= 0 {
 		return fmt.Errorf("no token provided")
 	}
-	if _, err := util.WritePacket(tc.TcpConn, []byte(tc.Cfg.Tokens[0])); err!=nil{
+	data := comp.CompressGzip([]byte(tc.Cfg.Tokens[0]))
+	if _, err := util.WritePacket(tc.TcpConn, data); err!=nil{
 		return err
 	}
 	return nil
