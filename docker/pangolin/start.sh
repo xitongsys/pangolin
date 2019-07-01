@@ -6,6 +6,7 @@ function start_server ()
 	ip=`ip addr show dev "eth0" | awk '$1 == "inet" { sub("/.*", "", $2); print $2 }'`
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source $ip
+	iptables -P FORWARD ACCEPT
 	/pangolin/main -c /pangolin/configs/cfg_server.json 
 }
 
@@ -16,6 +17,7 @@ function start_client ()
 	ip link set tun0 up
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o tun0 -j SNAT --to-source 10.0.0.22
+	iptables -P FORWARD ACCEPT
 	
 	gw=`route -n | awk '$1 == "0.0.0.0" {print $2}'`
 	route add $SERVERIP gw $gw
