@@ -73,7 +73,7 @@ func (h *TCP) Unmarshal(bs []byte) error {
 	return nil
 }
 
-func ReplaceTcpCheckSum(bs []byte) error {
+func ReCalTcpCheckSum(bs []byte) error {
 	if len(bs) < 20 {
 		return fmt.Errorf("too short")
 	}
@@ -92,6 +92,10 @@ func ReplaceTcpCheckSum(bs []byte) error {
 	tcpbs[16] = 0
 	tcpbs[17] = 0
 
+	if len(tcpbs) % 2 == 1 {
+		tcpbs = append(tcpbs, byte(0))
+	}
+
 	s := uint32(0)
 	for i := 0; i<len(ippsbs); i+=2 {
 		s +=  uint32(binary.BigEndian.Uint16(ippsbs[i : i+2]))
@@ -99,8 +103,10 @@ func ReplaceTcpCheckSum(bs []byte) error {
 	for i := 0; i<len(tcpbs); i+=2 {
 		s +=  uint32(binary.BigEndian.Uint16(tcpbs[i : i+2]))
 	}
-	s = (s >> 16) + (s & 0xffff)
-	checkSum := uint16(s ^ 0xffffffff)
-	binary.BigEndian.PutUint16(tcpbs[16:], checkSum)
+	
+	for (s>>16) > 0 {
+		s = (s>>16) + (s&0xffff)
+	}
+	binary.BigEndian.PutUint16(tcpbs[16:], ^uint16(s))
 	return nil
 }

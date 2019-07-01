@@ -1,19 +1,14 @@
 package com.example.pangolin;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.net.VpnService;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -21,11 +16,9 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.util.Arrays;
 
 public class PangolinVpnService extends VpnService {
     final static String ACTION_DISCONNECT = "disconnect";
@@ -36,11 +29,13 @@ public class PangolinVpnService extends VpnService {
     static int serverPort;
     static String dns;
     static String protocol = "tcp";
+    static String token = "";
     Thread sendrecvThreadUdp;
     Thread sendThreadTcp, recvThreadTcp;
     Socket tcpSocket;
     ParcelFileDescriptor localTunnel;
     private PendingIntent pendingIntent;
+    private Encryption encryption;
 
     public PangolinVpnService() {
     }
@@ -77,6 +72,8 @@ public class PangolinVpnService extends VpnService {
                 }
 
                 dns = ex.getString("dns");
+                token = ex.getString("token");
+                encryption = new Encryption(token);
 
                 Notification.Builder builder = new Notification.Builder(this);
                 builder.setContentIntent(pendingIntent)
@@ -85,8 +82,6 @@ public class PangolinVpnService extends VpnService {
                         .setContentText("<Server>" + serverIP + ":" + serverPort)
                         .setWhen(System.currentTimeMillis());
                 Notification notification = builder.build();
-
-                //startForeground(1, new Notification(R.mipmap.ic_launcher, "Pangolin", System.currentTimeMillis()));
                 startForeground(1, notification);
                 connect();
             }
@@ -121,31 +116,25 @@ public class PangolinVpnService extends VpnService {
                     FileInputStream in = new FileInputStream(localTunnel.getFileDescriptor());
                     FileOutputStream out = new FileOutputStream(localTunnel.getFileDescriptor());
 
-                    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE);
-
                     while(!isInterrupted()){
                         try {
-                            int ln = in.read(packet.array());
-
+                            byte[] buf = new byte[MAX_PACKET_SIZE];
+                            int ln = in.read(buf);
                             if (ln > 0) {
-                                //Log.i("========send", "===========" + ln);
-                                packet.limit(ln);
-                                udp.write(compress(packet));
+                                byte[] cmpbuf = Compress.compress(Arrays.copyOfRange(buf, 0, ln));
+                                ByteBuffer bf = ByteBuffer.wrap(cmpbuf);
+                                udp.write(bf);
                             }
-                            packet.clear();
 
-                            ln = udp.read(packet);
-
+                            ByteBuffer bf = ByteBuffer.allocate(MAX_PACKET_SIZE);
+                            ln = udp.read(bf);
                             if (ln > 0) {
-                                //Log.i("========recv", "===========" + ln);
-                                packet.limit(ln);
-                                ByteBuffer unpacket = uncompress(packet);
-                                byte[] bs = new byte[unpacket.remaining()];
-                                unpacket.rewind();
-                                unpacket.get(bs, 0, bs.length);
-                                out.write(bs);
+                                bf.limit(ln); bf.rewind();
+                                buf = new byte[ln];
+                                bf.get(buf);
+                                byte[] undata = Compress.uncompress(buf);
+                                out.write(undata);
                             }
-                            packet.clear();
 
                         }catch(Exception e){
                             Log.e("send/rec", e.toString());
@@ -157,7 +146,6 @@ public class PangolinVpnService extends VpnService {
                 }
             }
         };
-
     }
 
     private void initTcpThread() {
@@ -167,19 +155,16 @@ public class PangolinVpnService extends VpnService {
                 try{
                     FileInputStream in = new FileInputStream(localTunnel.getFileDescriptor());
                     OutputStream out = tcpSocket.getOutputStream();
-                    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE);
+                    TcpPacket.write(Compress.compress(token.getBytes()), out);
 
                     while(!isInterrupted()){
                         try {
-                            int ln = in.read(packet.array());
+                            byte[] buf = new byte[MAX_PACKET_SIZE];
+                            int ln = in.read(buf);
                             if (ln > 0) {
-                                packet.limit(ln);
-                                ByteBuffer cpkg = compress(packet);
-                                byte[] cbs = new byte[cpkg.remaining()];
-                                cpkg.get(cbs, 0, cbs.length);
-                                TcpPacket.write(cbs, out);
+                                byte[] endata = encryption.encrypt(Arrays.copyOfRange(buf, 0, ln));
+                                TcpPacket.write(Compress.compress(endata), out);
                             }
-                            packet.clear();
 
                         }catch(Exception e){
                             Log.e("sendThreadTcp", e.toString());
@@ -201,16 +186,11 @@ public class PangolinVpnService extends VpnService {
 
                     while(!isInterrupted()){
                         try {
-                            ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE);
-                            int ln = TcpPacket.read(packet.array(), in);
+                            byte[] buf = new byte[MAX_PACKET_SIZE];
+                            int ln = TcpPacket.read(buf, in);
                             if (ln > 0) {
-                                //Log.i("========recv", "===========" + ln);
-                                packet.limit(ln);
-                                ByteBuffer unpacket = uncompress(packet);
-                                byte[] bs = new byte[unpacket.remaining()];
-                                unpacket.rewind();
-                                unpacket.get(bs, 0, bs.length);
-                                out.write(bs);
+                                byte[] undata = Compress.uncompress(Arrays.copyOfRange(buf, 0, ln));
+                                out.write(encryption.decrypt(undata));
                             }
 
                         }catch(Exception e){
@@ -223,56 +203,6 @@ public class PangolinVpnService extends VpnService {
                 }
             }
         };
-    }
-
-    public static ByteBuffer compress(ByteBuffer bf) {
-        try {
-            bf.rewind();
-            byte[] bs = new byte[bf.remaining()];
-            bf.get(bs, 0, bs.length);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            GZIPOutputStream gzip = new GZIPOutputStream(out);
-            gzip.write(bs);
-            gzip.flush();
-            gzip.close();
-            ByteBuffer res = ByteBuffer.allocate(MAX_PACKET_SIZE);
-            byte[] outbs = out.toByteArray();
-            res.put(outbs);
-            res.limit(outbs.length);
-            res.rewind();
-            return res;
-
-        }catch(Exception e){
-            Log.e("Compress", e.toString());
-        }
-        return null;
-    }
-
-    public static ByteBuffer uncompress(ByteBuffer bf){
-        try {
-            bf.rewind();
-            byte[] bs = new byte[bf.remaining()];
-            bf.get(bs, 0, bs.length);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ByteArrayInputStream in = new ByteArrayInputStream(bs);
-            GZIPInputStream gunzip = new GZIPInputStream(in);
-            byte[] buffer = new byte[256];
-            int n;
-            while ((n = gunzip.read(buffer)) >= 0) {
-                out.write(buffer, 0, n);
-            }
-            ByteBuffer res = ByteBuffer.allocate(MAX_PACKET_SIZE);
-            byte[] outbs = out.toByteArray();
-            res.put(outbs);
-            res.limit(outbs.length);
-            res.rewind();
-            return res;
-
-        }catch(Exception e){
-            Log.e("uncompress: ", e.toString());
-
-        }
-        return null;
     }
 
     private void closeAll(){
@@ -354,6 +284,4 @@ public class PangolinVpnService extends VpnService {
             Log.e("vpn", e.toString());
         }
     }
-
-
 }

@@ -54,6 +54,5 @@ func Get(data []byte) (proto string, iph IPv4, udph UDP, tcph TCP, packetData []
 		err = fmt.Errorf("Protocol Unsupported: id=%d", iph.Protocol)
 	}
 	return
-
 }
 

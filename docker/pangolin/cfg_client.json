@@ -1,0 +1,10 @@
+{
+    "role": "client",
+    "server": "SERVERIP:SERVERPORT",
+    "tun": "10.0.0.22/8",
+    "tunname": "tun0",
+    "dns": "8.8.8.8",
+    "mtu": 1500,
+    "protocol": "tcp",
+    "tokens": ["token01"]
+}

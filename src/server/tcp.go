@@ -1,90 +1,71 @@
 package server
 
 import (
-	"fmt"
+	"comp"
 	"net"
 
-	"tun"
-	"comp"
+	"config"
 	"util"
-	"header"
+	"logging"
 )
 
 type TcpServer struct {
-	Addr      string
-	TcpListener	 net.Listener
-	TunServer *tun.TunServer
+	Addr         string
+	Cfg          *config.Config
+	TcpListener  net.Listener
+	LoginManager *LoginManager
 }
 
-func NewTcpServer(addr string, tunServer *tun.TunServer) (*TcpServer, error) {
-	tcpListener, err := net.Listen("tcp", addr)
+func NewTcpServer(cfg *config.Config, loginManager *LoginManager) (*TcpServer, error) {
+	tcpListener, err := net.Listen("tcp", cfg.ServerAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &TcpServer {
-		Addr: addr,
-		TcpListener: tcpListener,
-		TunServer: tunServer,
+	return &TcpServer{
+		Addr:         cfg.ServerAddr,
+		Cfg:          cfg,
+		TcpListener:  tcpListener,
+		LoginManager: loginManager,
 	}, nil
 }
 
 func (ts *TcpServer) Start() {
-	fmt.Println("[TcpServer] started.")
-	for {
-		if conn, err := ts.TcpListener.Accept(); err == nil{
-			go ts.handleRequest(conn)
+	logging.Log.Info("TcpServer started")
+	go func() {
+		for {
+			if conn, err := ts.TcpListener.Accept(); err == nil {
+				go ts.handleRequest(conn)
+			}
 		}
-	}
+	}()
 }
 
 func (ts *TcpServer) Stop() {
-	fmt.Println("[TcpServer] stopped.")
+	logging.Log.Info("TcpServer stopped")
 	ts.TcpListener.Close()
 }
 
 func (ts *TcpServer) handleRequest(conn net.Conn) {
-	clientAddr := conn.RemoteAddr().String()
-	fmt.Printf("[TcpServer] new connected client: %v\n", conn.RemoteAddr().String())
-
-	//read from client, write to channel
-	go func() {
-		for {
-			var err error
-			data, err := util.ReadPacket(conn)
-			if err != nil {
-				ts.TunServer.CloseClient(clientAddr)
-				return
-			}
-
-			if ln := len(data); ln > 0 {
-				if data, err = comp.UncompressGzip(data); err == nil && len(data)>0{
-					if protocol, src, dst, err := header.GetBase(data); err == nil {
-						ts.TunServer.WriteToChannel("tcp", ts.Addr, data)
-						fmt.Printf("[TcpServer][readFromClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, ln, src, dst)
-					}
-				}
-			}
-		}
-	}()
-
-	//read from channel, write to client
-	go func() {
-		for {
-			data, err := ts.TunServer.ReadFromChannel(ts.Addr)
-			if err != nil {
-				return
-			}
-			if ln := len(data); ln > 0 {
-				if protocol, src, dst, err := header.GetBase(data); err == nil {
-					if _, err := util.WritePacket(conn, comp.CompressGzip(data)); err != nil {
-						ts.TunServer.CloseClient(clientAddr)
-						return
-					}
-					fmt.Printf("[TcpServer][writeToClient] client:%v, protocol:%v, len:%v, src:%v, dst:%v\n", clientAddr, protocol, ln, src, dst)
-				}
-			}
-		}
-	}()
+	client := "tcp:" + conn.RemoteAddr().String()
+	logging.Log.Infof("New connected client: %v", client)
+	if err := ts.login(client, conn); err != nil {
+		logging.Log.Errorf("Client %v login failed: %v", client, err)
+		return
+	}
+	ts.LoginManager.StartClient(client, conn)
 }
 
+func (ts *TcpServer) login(client string, conn net.Conn) error {
+	if data, err := util.ReadPacket(conn); err != nil {
+		return err
+
+	} else {
+		if data, err = comp.UncompressGzip(data); err != nil || len(data) <= 0 {
+			return err
+
+		} else {
+			return ts.LoginManager.Login(client, string(data))
+		}
+	}
+}
