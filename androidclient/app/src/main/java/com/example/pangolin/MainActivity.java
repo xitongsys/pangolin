@@ -22,7 +22,7 @@ import java.nio.channels.DatagramChannel;
 public class MainActivity extends AppCompatActivity {
     private Button btConn, btDisconn;
     private ToggleButton protocolButton;
-    private EditText editServer, editServerPort, editLocal, editDNS;
+    private EditText editServer, editServerPort, editLocal, editDNS, tokenEdit;
     private TextView viewInfo;
     private Thread sendThread;
     SharedPreferences preferences;
@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         editServerPort = findViewById(R.id.serverPortEdit);
         editLocal = findViewById(R.id.localAddrEdit);
         viewInfo = findViewById(R.id.infoTextView);
+        tokenEdit = findViewById(R.id.tokenText);
         editDNS = findViewById(R.id.dnsEdit);
 
         sendThread = null;
@@ -47,10 +48,17 @@ public class MainActivity extends AppCompatActivity {
         preferences = getPreferences(Activity.MODE_PRIVATE);
         preEditor = preferences.edit();
 
-        editServer.setText(preferences.getString("serverIP", "0.0.0.0"));
-        editServerPort.setText(preferences.getString("serverPort", "12346"));
+        editServer.setText(preferences.getString("serverIP", "192.168.0.1"));
+        editServerPort.setText(preferences.getString("serverPort", "12345"));
         editLocal.setText(preferences.getString("localIP", "10.0.0.33/24"));
         editDNS.setText(preferences.getString("dns", "8.8.8.8"));
+        tokenEdit.setText(preferences.getString("token", "abcd"));
+        String preProtocol = preferences.getString("protocol", "tcp");
+        if(preProtocol.equals("tcp")){
+            protocolButton.setChecked(false);
+        }else{
+            protocolButton.setChecked(true);
+        }
 
         btDisconn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
             String serverPort = editServerPort.getText().toString();
             String localIp = editLocal.getText().toString();
             String dns = editDNS.getText().toString();
+            String token = tokenEdit.getText().toString();
             String protocol = "tcp";
             if(this.protocolButton.isChecked()){
                 protocol = "udp";
@@ -103,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("serverPort", Integer.parseInt(serverPort));
             intent.putExtra("localIP", localIp);
             intent.putExtra("dns", dns);
+            intent.putExtra("token", token);
             intent.putExtra("protocol", protocol);
             startService(intent);
 
@@ -110,8 +120,9 @@ public class MainActivity extends AppCompatActivity {
             preEditor.putString("serverPort", serverPort);
             preEditor.putString("localIP", localIp);
             preEditor.putString("dns", dns);
+            preEditor.putString("token", token);
+            preEditor.putString("protocol", protocol);
             preEditor.commit();
-
         }
     }
 

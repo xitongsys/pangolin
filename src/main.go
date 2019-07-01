@@ -1,69 +1,78 @@
 package main
 
 import (
-	"tun"
+	"client"
 	"flag"
-	"fmt"
 	"os"
 	"sync"
 
-	"client"
 	"server"
+	"config"
+	"logging"
 )
 
-var role = flag.String("role", "server", "")
-var protocol = flag.String("protocol", "udp", "")
-var saddr = flag.String("server", "0.0.0.0:12345", "")
-var tunName = flag.String("tun", "tun0", "")
-var mtu = flag.Int("mtu", 1500, "")
+var configFile = flag.String("c", "cfg.json", "")
+var logLevel = flag.String("l", "info", "")
 
 func main() {
+	var err error
+	logging.Log.Info("Welcome to use Pangolin!")
+	defer func(){
+		logging.Log.Error(err)
+	}()
+
 	flag.Parse()
-	fmt.Println("Welcome to use Pangolin!")
-	if *role == "client" {
-		if *protocol == "udp" {
-			uc, err := client.NewUdpClient(*saddr, *tunName, *mtu)
-			if err != nil {
-				fmt.Println("[main] start udp client failed: ", err)
-				os.Exit(-1)
-			}
-			uc.Start()
+	logging.SetLevel(*logLevel)
 
-		}else if *protocol == "tcp" {
-			tc, err := client.NewTcpClient(*saddr, *tunName, *mtu)
-			if err != nil {
-				fmt.Println("[main] start tcp client failed: ", err)
-				os.Exit(-1)
-			}
-			tc.Start()
-		} 
+	cfg, err := config.NewConfigFromFile(*configFile)
+	if err != nil {
+		os.Exit(-1)
+	}
+	logging.Log.Info(cfg.String())
 
-	} else {
-		tunServer, err := tun.NewTunServer(*tunName, *mtu)
+	if cfg.Role == "server" {
+		loginManager, err := server.NewLoginManager(cfg)
 		if err != nil {
-			fmt.Println("[main] tun server can't start: ", err)
+			logging.Log.Error(err)
+			os.Exit(-1)
+		}
+		
+		tcpServer, err := server.NewTcpServer(cfg, loginManager)
+		if err != nil {
+			logging.Log.Error(err)
 			os.Exit(-1)
 		}
 
-		udpServer, err := server.NewUdpServer(*saddr, tunServer)
+		udpServer, err := server.NewUdpServer(cfg, loginManager)
 		if err != nil {
-			fmt.Println("[main] udp server can't start: ", err)
+			logging.Log.Error(err)
 			os.Exit(-1)
 		}
 
-		tcpServer, err := server.NewTcpServer(*saddr, tunServer)
-		if err != nil {
-			fmt.Println("[main] tcp server can't start: ", err)
-			os.Exit(-1)
-		}
-
-		tunServer.Start()
-		udpServer.Start()
+		loginManager.Start()
 		tcpServer.Start()
+		udpServer.Start()
+
+	}else{
+		if cfg.Protocol == "tcp" {
+			tcpClient, err := client.NewTcpClient(cfg)
+			if err != nil {
+				logging.Log.Error(err)
+				os.Exit(-1)
+			}
+
+			tcpClient.Start()
+
+		} else{
+			udpClient, err := client.NewUdpClient(cfg)
+			if err != nil {
+				logging.Log.Error(err)
+				os.Exit(-1)
+			}
+			udpClient.Start()
+		}
 
 	}
-
-	fmt.Printf("Run as %s, server:%s, tun:%s, mtu:%d\n", *role, *saddr, *tunName, *mtu)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

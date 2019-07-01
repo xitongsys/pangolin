@@ -1,12 +1,13 @@
 package client
 
 import (
-	"fmt"
 	"net"
 
 	"comp"
 	"tun"
 	"header"
+	"config"
+	"logging"
 )
 
 type UdpClient struct {
@@ -15,8 +16,9 @@ type UdpClient struct {
 	TunConn   tun.Tun
 }
 
-func NewUdpClient(sadd string, tname string, mtu int) (*UdpClient, error) {
-	conn, err := net.Dial("udp", sadd)
+func NewUdpClient(cfg *config.Config) (*UdpClient, error) {
+	saddr, tname, mtu := cfg.ServerAddr, cfg.TunName, cfg.Mtu
+	conn, err := net.Dial("udp", saddr)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +28,7 @@ func NewUdpClient(sadd string, tname string, mtu int) (*UdpClient, error) {
 	}
 
 	return &UdpClient{
-		ServerAdd: sadd,
+		ServerAdd: saddr,
 		UdpConn:   conn,
 		TunConn:   tun,
 	}, nil
@@ -39,7 +41,7 @@ func (uc *UdpClient) writeToServer() {
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				cmpData := comp.CompressGzip(data[:n])
 				uc.UdpConn.Write(cmpData)
-				fmt.Printf("[UdpClient][writeToServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
+				logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 			}
 		}
 	}
@@ -55,21 +57,21 @@ func (uc *UdpClient) readFromServer() error {
 			}
 			if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
 				uc.TunConn.Write(uncmpData)
-				fmt.Printf("[UdpClient][readFromServer] protocol:%v, len:%v, src:%v, dst:%v\n", protocol, n, src, dst)
+				logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 			}
 		}
 	}
 }
 
 func (uc *UdpClient) Start() error {
-	fmt.Println("[UdpClient] startted.")
+	logging.Log.Info("UdpClient started")
 	go uc.writeToServer()
 	go uc.readFromServer()
 	return nil
 }
 
 func (uc *UdpClient) Stop() error {
-	fmt.Println("[UdpClient] stopped.")
+	logging.Log.Info("UdpClient stopped")
 	uc.UdpConn.Close()
 	uc.TunConn.Close()
 	return nil

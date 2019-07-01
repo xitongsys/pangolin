@@ -52,7 +52,7 @@ func (h *UDP) Unmarshal(bs []byte) error {
 	return nil
 }
 
-func ReplaceUdpCheckSum(bs []byte) error {
+func ReCalUdpCheckSum(bs []byte) error {
 	if len(bs) < 20 {
 		return fmt.Errorf("too short")
 	}
@@ -68,8 +68,12 @@ func ReplaceUdpCheckSum(bs []byte) error {
 
 	ippsbs := ipps.Marshal()
 	udpbs := bs[ipvh.HeaderLen():ipvh.LenBytes()]
+	udpbs[6] = 0
 	udpbs[7] = 0
-	udpbs[8] = 0
+
+	if len(udpbs) % 2 == 1 {
+		udpbs = append(udpbs, byte(0))
+	}
 
 	s := uint32(0)
 	for i := 0; i<len(ippsbs); i+=2 {
@@ -78,8 +82,10 @@ func ReplaceUdpCheckSum(bs []byte) error {
 	for i := 0; i<len(udpbs); i+=2 {
 		s +=  uint32(binary.BigEndian.Uint16(udpbs[i : i+2]))
 	}
-	s = (s >> 16) + (s & 0xffff)
-	checkSum := uint16(s ^ 0xffffffff)
-	binary.BigEndian.PutUint16(udpbs[7:], checkSum)
+	
+	for (s>>16) > 0 {
+		s = (s>>16) + (s&0xffff)
+	}
+	binary.BigEndian.PutUint16(udpbs[6:], ^uint16(s))
 	return nil
 }
