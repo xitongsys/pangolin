@@ -6,5 +6,5 @@
     "dns": "8.8.8.8",
     "mtu": 1500,
     "protocol": "tcp",
-    "tokens": ["abcd"]
+    "tokens": ["token01", "token02"]
 }
