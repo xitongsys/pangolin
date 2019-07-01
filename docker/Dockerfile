@@ -1,7 +1,7 @@
 FROM ubuntu
+USER root
 ENTRYPOINT bash /pangolin/start.sh
 ENV SERVERIP "47.240.40.78"
-ENV SERVERPORT "12345"
 ENV ROLE "SERVER"
 
 RUN apt update
