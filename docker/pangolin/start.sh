@@ -28,3 +28,4 @@ function start_client ()
 [[ "$ROLE" == "SERVER" ]] && start_server
 [[ "$ROLE" == "CLIENT" ]] && start_client
 
+tail -f
