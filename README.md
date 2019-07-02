@@ -63,6 +63,12 @@ docker run --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/
 #### Windows
 * Follow this [link](https://docs.docker.com/machine/drivers/hyper-v/#2-set-up-a-new-external-network-switch-optional) to create an external VMSwitch and a new docker machine.
 * Use the new docker machine and follow the steps of Linux.
+* Change your windows host default gateway to the docker
+```
+route delete 0.0.0.0
+route add 0.0.0.0 mask 0.0.0.0 192.168.0.13
+#192.168.0.13 is your docker public ip.
+```
 
 #### Mac
 * Not test yet, but I think it's ok. Maybe you can help :)
