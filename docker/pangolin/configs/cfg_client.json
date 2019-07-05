@@ -1,10 +1,10 @@
 {
     "role": "client",
-    "server": "147.140.40.78:12345",
+    "server": "{SERVERIP}:{SERVERPORT}",
     "tun": "10.0.0.22/8",
     "tunname": "tun0",
     "dns": "8.8.8.8",
     "mtu": 1500,
     "protocol": "tcp",
-    "tokens": ["token01", "token02"]
+    "tokens": {TOKENS}
 }
