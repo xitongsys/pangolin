@@ -29,6 +29,7 @@ function startPangolin () {
 }
 
 function stopPangolin () {
+    & docker-machine.exe env $env:VMNAME | Invoke-Expression
     docker-machine stop $env:VMNAME
     sleep 3
 }
@@ -115,16 +116,15 @@ $buttonStop.Location = New-Object System.Drawing.Point($BX3, $Y4)
 $buttonStop.Width = $BW
 
 function initEnv () {
-    & docker-machine.exe env $env:VMNAME | Invoke-Expression
     $env:SERVERIP = $textIp.Text
     $env:SERVERPORT = $textPort.Text
     $env:TOKENS = $textTokens.Text
     $env:ROLE = $comboRole.SelectedText
 
-    $env:installPangolin=installPangolin
-    $env:uninstallPangolin=uninstallPangolin
-    $env:startPangolin=startPangolin
-    $env:stopPangolin=stopPangolin
+    $env:installPangolin=$script:installPangolin
+    $env:uninstallPangolin=$script:uninstallPangolin
+    $env:startPangolin=$script:startPangolin
+    $env:stopPangolin=$script:stopPangolin
 }
 
 function outputToGUI {
@@ -162,7 +162,7 @@ $buttonStart.Add_Click(
         initEnv
         Start-Process powershell {
             $env:startPangolin
-        }
+        } | outputToGUI
     }
 )
 
@@ -171,7 +171,7 @@ $buttonStop.Add_Click(
         initEnv
         Start-Process powershell {
             $env:stopPangolin
-        }
+        } | outputToGUI
     }
 )
 
