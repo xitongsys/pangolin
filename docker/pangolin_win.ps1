@@ -1,35 +1,13 @@
-$VMNAME="pangolin"
-$SWITCHNAME="pangolin"
-$DOCKERNAME="pangolin"
+$env:VMNAME="pangolin"
+$env:SWITCHNAME="pangolin"
+$env:DOCKERNAME="pangolin"
 
-$SERVERIP="0.0.0.0"
-$SERVERPORT="12345"
-$TOKENS='["token01", "token02"]'
-$ROLE="CLIENT"
+# $SERVERIP="0.0.0.0"
+# $SERVERPORT="12345"
+# $TOKENS='["token01", "token02"]'
+# $ROLE="CLIENT"
 
-function installPangolin () {
-    $Adapter=(Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString()
-    New-VMSwitch -Name $SWITCHNAME -NetAdapterName $Adapter -AllowManagementOS $true
-    docker-machine create -d hyperv --hyperv-virtual-switch $SWITCHNAME $VMNAME
-    docker-machine restart $VMNAME 
-    docker-machine env $VMNAME
-    & docker-machine.exe env $VMNAME | Invoke-Expression
-    docker build -t $DOCKERNAME .
-}
-
-function uninstallPangolin () {
-    docker-machine stop $VMNAME
-    docker-machine rm -f $VMNAME
-    Remove-VMSwitch -Name $SWITCHNAME -Force
-}
-
-function startPangolin () {
-    docker run --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/tun --net host --env ROLE=$ROLE --env SERVERIP=$SERVERIP --env SERVERPORT=$SERVERPORT --env TOKENS=$TOKENS pangolin
-}
-
-function stopPangolin () {
-    docker run --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/tun --net host --env ROLE=$ROLE --env SERVERIP=$SERVERIP --env SERVERPORT=$SERVERPORT --env TOKENS=$TOKENS pangolin
-}
+. .\functions.ps1
 
 #UI##################################################################
 Add-Type -assembly System.Windows.Forms
@@ -112,11 +90,11 @@ $buttonStop.Location = New-Object System.Drawing.Point($BX3, $Y4)
 $buttonStop.Width = $BW
 
 function initEnv () {
-    & docker-machine.exe env $VMNAME | Invoke-Expression
-    $script:SERVERIP = $textIp.Text
-    $script:SERVERPORT = $textPort.Text
-    $script:TOKENS = $textTokens.Text
-    $script:ROLE = $comboRole.SelectedText
+    & docker-machine.exe env $env:VMNAME | Invoke-Expression
+    $env:SERVERIP = $textIp.Text
+    $env:SERVERPORT = $textPort.Text
+    $env:TOKENS = $textTokens.Text
+    $env:ROLE = $comboRole.SelectedText
 }
 
 function outputToGUI {
@@ -152,16 +130,20 @@ $buttonUninstall.Add_Click(
 $buttonStart.Add_Click(
     {
         initEnv
-        startPangolin | outputToGUI
-        [System.Windows.Forms.MessageBox]::Show("Done","Start")
+        Start-Process powershell {
+            . .\functions.ps1
+            startPangolin
+        }
     }
 )
 
 $buttonStop.Add_Click(
     {
         initEnv
-        stopPanolin | outputToGUI
-        [System.Windows.Forms.MessageBox]::Show("Done","Stop")
+        Start-Process powershell {
+            . .\functions.ps1
+            stopPangolin
+        }
     }
 )
 
@@ -170,6 +152,7 @@ $main.Text = "Pangolin"
 $main.Width = 435
 $main.Height = 510
 $main.FormBorderStyle = "FixedDialog"
+$main.MaximizeBox = $false
 $main.Controls.Add($labelIp)
 $main.Controls.Add($labelPort)
 $main.Controls.Add($textIp)
