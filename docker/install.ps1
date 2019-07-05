@@ -1,10 +1,10 @@
-$TOKENS='["token01", "token02"]'
 $SERVERIP="47.240.40.78"
 $SERVERPORT="12345"
+$TOKENS='["token01", "token02"]'
+
 $VMNAME="pangolin01"
 $SWITCHNAME="pangolin"
 $DOCKERNAME="pangolin"
-
 function MacroReplace ($file) {
     (Get-Content $file).Replace('{SERVERIP}', $SERVERIP).Replace('{SERVERPORT}', $SERVERPORT).Replace('{TOKENS}', $TOKENS) | Set-Content $file
 }
