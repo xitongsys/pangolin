@@ -120,11 +120,6 @@ function initEnv () {
     $env:SERVERPORT = $textPort.Text
     $env:TOKENS = $textTokens.Text
     $env:ROLE = $comboRole.SelectedText
-
-    $env:installPangolin=$script:installPangolin
-    $env:uninstallPangolin=$script:uninstallPangolin
-    $env:startPangolin=$script:startPangolin
-    $env:stopPangolin=$script:stopPangolin
 }
 
 function outputToGUI {
@@ -161,8 +156,10 @@ $buttonStart.Add_Click(
     {
         initEnv
         Start-Process powershell {
-            $env:startPangolin
-        } | outputToGUI
+            & docker-machine.exe env $env:VMNAME | Invoke-Expression
+            docker run --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/tun --net host --env ROLE=$env:ROLE --env SERVERIP=$env:SERVERIP --env SERVERPORT=$env:SERVERPORT --env TOKENS=$env:TOKENS pangolin
+            sleep 3
+        } 
     }
 )
 
@@ -170,8 +167,10 @@ $buttonStop.Add_Click(
     {
         initEnv
         Start-Process powershell {
-            $env:stopPangolin
-        } | outputToGUI
+            & docker-machine.exe env $env:VMNAME | Invoke-Expression
+            docker-machine stop $env:VMNAME
+            sleep 3
+        } 
     }
 )
 
