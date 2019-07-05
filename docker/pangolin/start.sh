@@ -1,3 +1,4 @@
+#SERVERIP/SERVERPORT/TOKENS
 function start_server ()
 {
 	ip tuntap add dev tun0 mod tun
@@ -20,16 +21,24 @@ function start_client ()
 	iptables -P FORWARD ACCEPT
 	
 	gw=`route -n | awk '$1 == "0.0.0.0" {print $2}'`
-	route add $SERVERIP gw $gw
+	route add {SERVERIP} gw $gw
 	route add default gw 10.0.0.1
 	echo "nameserver 8.8.8.8" > /etc/resolv.conf
 	/pangolin/main -c /pangolin/configs/cfg_client.json 
 }
+
+function replace ()
+{	
+	sed -i "s/{SERVERIP}/$SERVERIP/g" $1
+	sed -i "s/{SERVERPORT}/$SERVERPORT/g" $1
+	sed -i "s/{TOKENS}/$TOKENS/g" $1
+}
+
+replace /pangolin/configs/cfg_client.json
+replace /pangolin/configs/cfg_server.json
 
 
 [[ "$ROLE" == "SERVER" ]] && start_server
 [[ "$ROLE" == "CLIENT" ]] && start_client
 
 echo "pangolin exit"
-
-tail -f
