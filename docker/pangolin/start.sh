@@ -42,3 +42,4 @@ replace /pangolin/configs/cfg_server.json
 [[ "$ROLE" == "CLIENT" ]] && start_client
 
 echo "pangolin exit"
+tail -f
