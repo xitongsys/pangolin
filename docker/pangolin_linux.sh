@@ -1,8 +1,7 @@
 SERVERIP="0.0.0.0"
 SERVERPORT="12345"
-TOKENS='\[\"token01\", \"token02\"\]'
-ROLE="CLIENT"
-
+TOKENS='["token01", "token02"]'
+ROLE="SERVER"
 
 function install () {
 	docker build -t pangolin .
@@ -13,8 +12,12 @@ function start () {
 }
 
 function stop() {
-	docker 
+	docker ps | grep pangolin | awk '{print $1}' | xargs -I {} docker kill {} 
+	[[ "$ROLE" == "CLIENT" ]] && route del default
 }
 
 
-start
+cmd=$1
+[[ "$cmd" == "install" ]] && install
+[[ "$cmd" == "start" ]] && start
+[[ "$cmd" == "stop" ]] && stop
