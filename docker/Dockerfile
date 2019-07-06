@@ -1,8 +1,6 @@
 FROM ubuntu
 USER root
 ENTRYPOINT bash /pangolin/start.sh
-ENV SERVERIP "{SERVERIP}"
-ENV ROLE "SERVER"
 
 RUN apt update
 RUN apt install -y iproute2 iptables net-tools dos2unix
