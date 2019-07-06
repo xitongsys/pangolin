@@ -125,7 +125,7 @@ function initEnv () {
     $env:SERVERIP = $textIp.Text
     $env:SERVERPORT = $textPort.Text
     $env:TOKENS = $textTokens.Text
-    $env:ROLE = $comboRole.SelectedText
+    $env:ROLE = $comboRole.Text
 }
 
 function outputToGUI {
@@ -172,6 +172,7 @@ $buttonStart.Add_Click(
 $buttonStop.Add_Click(
     {
         initEnv
+        [System.Windows.Forms.MessageBox]::Show($env:ROLE, $env:ROLE)
         Start-Process powershell {
             & docker-machine.exe env $env:VMNAME | Invoke-Expression
             docker-machine stop $env:VMNAME
