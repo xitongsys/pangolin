@@ -32,6 +32,8 @@ function stopPangolin () {
     initEnv
     & docker-machine.exe env $env:VMNAME | Invoke-Expression
     docker ps | foreach { $s=$_ -split '\s+'; if($s[1] -eq $env:DOCKERNAME){docker kill $s[0];}}
+    $Adapter=(Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString()
+    Restart-NetAdapter $Adapter
 }
 
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
@@ -80,7 +82,7 @@ $textPort.Location = New-Object System.Drawing.Point($X1, $Y1)
 $textPort.Width = $W1
 
 $textTokens = New-Object System.Windows.Forms.TextBox
-$textTokens.Text = '["toke01", "token02"]'
+$textTokens.Text = '["token01", "token02"]'
 $textTokens.Location = New-Object System.Drawing.Point($X1, $Y2)
 $textTokens.Width = $W1
 
@@ -163,6 +165,11 @@ $buttonStart.Add_Click(
         initEnv
         Start-Process powershell {
             & docker-machine.exe env $env:VMNAME | Invoke-Expression
+            $pangoinIp = docker-machine.exe ip $env:VMNAME
+            Get-NetRoute | where { $_.DestinationPrefix -eq '0.0.0.0/0' } | select { $_.NextHop } | route delete 0.0.0.0
+            route add 0.0.0.0 mask 0.0.0.0 $pangoinIp
+            $Adapter=(Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString()
+            Set-DnsClientServerAddress -InterfaceAlias $Adapter -ServerAddresses("8.8.8.8")
             docker run --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/tun --net host --env ROLE=$env:ROLE --env SERVERIP=$env:SERVERIP --env SERVERPORT=$env:SERVERPORT --env TOKENS=$env:TOKENS pangolin
             sleep 3
         } 
