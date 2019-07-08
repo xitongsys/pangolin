@@ -28,7 +28,7 @@ function startPangolin () {
     Get-NetRoute | where { $_.DestinationPrefix -eq '0.0.0.0/0' } | select { $_.NextHop } | route delete 0.0.0.0
     route add 0.0.0.0 mask 0.0.0.0 $pangolinIp
     $Adapter=((Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString())
-    #Set-DnsClientServerAddress -InterfaceAlias $Adapter -ServerAddresses("8.8.8.8")
+    Set-DnsClientServerAddress -InterfaceAlias $Adapter -ServerAddresses("8.8.8.8")
     docker run --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/tun --net host --env ROLE=$env:ROLE --env SERVERIP=$env:SERVERIP --env SERVERPORT=$env:SERVERPORT --env TOKENS=$env:TOKENS pangolin
     sleep 3
 }
@@ -168,7 +168,10 @@ $buttonUninstall.Add_Click(
 $buttonStart.Add_Click(
     {
         initEnv
-        Start-Process powershell -ArgumentList (startPangolin)
+        $start={
+            startPangolin
+        }
+        Start-Process powershell -ArgumentList ($start)
     }
 )
 
