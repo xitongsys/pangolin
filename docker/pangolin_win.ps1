@@ -12,7 +12,7 @@ function installPangolin () {
     New-VMSwitch -Name $env:SWITCHNAME -NetAdapterName $Adapter -AllowManagementOS $true
     docker-machine create -d hyperv --hyperv-virtual-switch $env:SWITCHNAME $env:VMNAME
     docker-machine env $env:VMNAME
-    & docker-machine.exe env $env:VMNAME | Invoke-Expression
+    docker-machine.exe env $env:VMNAME | Invoke-Expression
     docker build -t $env:DOCKERNAME .
 }
 
@@ -29,9 +29,9 @@ function startPangolin () {
 }
 
 function stopPangolin () {
+    initEnv
     & docker-machine.exe env $env:VMNAME | Invoke-Expression
-    docker-machine stop $env:VMNAME
-    sleep 3
+    docker ps | foreach { $s=$_ -split '\s+'; if($s[1] -eq $env:DOCKERNAME){docker kill $s[0];}}
 }
 
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
@@ -124,7 +124,7 @@ $buttonStop.Width = $BW
 function initEnv () {
     $env:SERVERIP = $textIp.Text
     $env:SERVERPORT = $textPort.Text
-    $env:TOKENS = $textTokens.Text
+    $env:TOKENS = $textTokens.Text.Replace('"','\"')
     $env:ROLE = $comboRole.Text
 }
 
@@ -172,12 +172,8 @@ $buttonStart.Add_Click(
 $buttonStop.Add_Click(
     {
         initEnv
-        [System.Windows.Forms.MessageBox]::Show($env:ROLE, $env:ROLE)
-        Start-Process powershell {
-            & docker-machine.exe env $env:VMNAME | Invoke-Expression
-            docker-machine stop $env:VMNAME
-            sleep 3
-        } 
+        stopPangolin | outputToGUI
+        [System.Windows.Forms.MessageBox]::Show("Done","Stop")
     }
 )
 
