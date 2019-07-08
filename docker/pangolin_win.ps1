@@ -29,7 +29,7 @@ function startPangolin () {
     route add 0.0.0.0 mask 0.0.0.0 $pangolinIp
     $Adapter=((Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString())
     Set-DnsClientServerAddress -InterfaceAlias $Adapter -ServerAddresses("8.8.8.8")
-    docker run --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/tun --net host --env ROLE=$env:ROLE --env SERVERIP=$env:SERVERIP --env SERVERPORT=$env:SERVERPORT --env TOKENS=$env:TOKENS pangolin
+    docker run -d --cap-add NET_ADMIN --cap-add NET_RAW --device /dev/net/tun:/dev/net/tun --net host --env ROLE=$env:ROLE --env SERVERIP=$env:SERVERIP --env SERVERPORT=$env:SERVERPORT --env TOKENS=$env:TOKENS pangolin
     sleep 3
 }
 
@@ -40,6 +40,7 @@ function stopPangolin () {
     $Adapter=(Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString()
     Restart-NetAdapter $Adapter
 }
+
 
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 {
@@ -168,10 +169,9 @@ $buttonUninstall.Add_Click(
 $buttonStart.Add_Click(
     {
         initEnv
-        $start={
-            startPangolin
-        }
-        Start-Process powershell -ArgumentList ($start)
+        startPangolin | outputToGUI
+        #Start-Process powershell -ArgumentList ({. $env:FUNCFILE; startPangolin}) -NoNewWindow
+        [System.Windows.Forms.MessageBox]::Show("Done","Start")
     }
 )
 
