@@ -6,7 +6,6 @@ Pangolin is a Go implenmentation of TUN VPN.
 * Using Docker, it supports Linux/Windows/Mac.
 * For client, it supports Linux/Windows/Mac/Android.
 
-
 ## Quick Start
 The pangolin can only run natively on Linux. But you can use docker to run it on Windows and Mac.
 
@@ -114,6 +113,12 @@ The config file is json format like
 	echo "nameserver 8.8.8.8" > /etc/resolv.conf
 ```
 
-
+## Status
+This project is still in progress and you can contribute to it. Anything is welcome !
+* Test on Mac 
+* iOS client
+* Improve Android client
+* Improve windows powershell script to support Win7
+* Add UT/Doc
 
 
