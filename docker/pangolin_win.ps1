@@ -9,6 +9,7 @@ $ROLE="CLIENT"
 
 function installPangolin () {
     echo "Install"
+    initEnv
     $Adapter=(Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString()
     New-VMSwitch -Name $env:SWITCHNAME -NetAdapterName $Adapter -AllowManagementOS $true
     docker-machine create -d hyperv --hyperv-virtual-switch $env:SWITCHNAME $env:VMNAME
@@ -153,6 +154,7 @@ function initEnv () {
     $env:SERVERPORT = $textPort.Text
     $env:TOKENS = $textTokens.Text.Replace('"','\"')
     $env:ROLE = $comboRole.Text
+    cd $PSScriptRoot
 }
 
 function outputToGUI {
