@@ -2,12 +2,13 @@ $env:VMNAME="pangolin"
 $env:SWITCHNAME="pangolin"
 $env:DOCKERNAME="pangolin"
 
-# $SERVERIP="0.0.0.0"
-# $SERVERPORT="12345"
-# $TOKENS='["token01", "token02"]'
-# $ROLE="CLIENT"
+$SERVERIP="0.0.0.0"
+$SERVERPORT="12345"
+$TOKENS='["token01", "token02"]'
+$ROLE="CLIENT"
 
 function installPangolin () {
+    echo "Install"
     $Adapter=(Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString()
     New-VMSwitch -Name $env:SWITCHNAME -NetAdapterName $Adapter -AllowManagementOS $true
     docker-machine create -d hyperv --hyperv-virtual-switch $env:SWITCHNAME $env:VMNAME
@@ -17,12 +18,14 @@ function installPangolin () {
 }
 
 function uninstallPangolin () {
+    echo "Uninstall"
     docker-machine stop $env:VMNAME
     docker-machine rm -f $env:VMNAME
     Remove-VMSwitch -Name $env:SWITCHNAME -Force
 }
 
 function startPangolin () {
+    echo "Start Pangolin"
     & docker-machine.exe env $env:VMNAME | Invoke-Expression
     $pangolinIp=docker-machine.exe ip $env:VMNAME
     Get-NetRoute | where { $_.DestinationPrefix -eq '0.0.0.0/0' } | select { $_.NextHop } | route delete 0.0.0.0
@@ -34,13 +37,21 @@ function startPangolin () {
 }
 
 function stopPangolin () {
+    echo "Stop Pangolin"
     initEnv
     & docker-machine.exe env $env:VMNAME | Invoke-Expression
     docker ps | foreach { $s=$_ -split '\s+'; if($s[1] -eq $env:DOCKERNAME){docker kill $s[0];}}
     $Adapter=(Get-NetRoute | Where-Object -FilterScript {$_.NextHop -Ne "::"} | Where-Object -FilterScript { $_.NextHop -Ne "0.0.0.0" } | Where-Object -FilterScript { ($_.NextHop.SubString(0,6) -Ne "fe80::") } | Get-NetAdapter ).Name.ToString()
     Restart-NetAdapter $Adapter
+    Set-DnsClientServerAddress -InterfaceAlias $Adapter -ResetServerAddresses
 }
 
+function restartVM () {
+    echo "Restart VM"
+    initEnv
+    & docker-machine.exe env $env:VMNAME | Invoke-Expression
+    docker-machine.exe restart $env:VMNAME
+}
 
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 {
@@ -52,10 +63,35 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 #UI##################################################################
 Add-Type -assembly System.Windows.Forms
 $X0=10; $X1=110; 
-$Y0=10; $Y1=40; $Y2=70; $Y3=100; $Y4=130; $Y5=160;
+$Y0=40; $Y1=70; $Y2=100; $Y3=130; $Y4=160; $Y5=190;
 $W0 = 100; $W1 = 300;
-$BW = 100
-$BX0=10; $BX1=110; $BX2=210; $BX3=310;
+
+#managemenu
+$installMenu = New-Object System.Windows.Forms.ToolStripMenuItem
+$installMenu.Text = "Install"
+$uninstallMenu = New-Object System.Windows.Forms.ToolStripMenuItem
+$uninstallMenu.Text = "Uninstall"
+$manageMenu = New-Object System.Windows.Forms.ToolStripMenuItem
+$manageMenu.Text = "Manage"
+$manageMenu.DropDownItems.Add($installMenu)
+$manageMenu.DropDownItems.Add($uninstallMenu)
+#controlMenu
+$restartVMMenu = New-Object System.Windows.Forms.ToolStripMenuItem
+$restartVMMenu.Text = "Restart VM"
+$startMenu = New-Object System.Windows.Forms.ToolStripMenuItem
+$startMenu.text = 'Start'
+$stopMenu = New-Object System.Windows.Forms.ToolStripMenuItem
+$stopMenu.text = 'Sop'
+$controlMenu = New-Object System.Windows.Forms.ToolStripMenuItem
+$controlMenu.Text = 'Control'
+$controlMenu.DropDownItems.Add($startMenu)
+$controlMenu.DropDownItems.Add($stopMenu)
+$controlMenu.DropDownItems.Add($restartVMMenu)
+#menu bar
+$menuBar = New-Object System.Windows.Forms.MenuStrip
+$menuBar.Items.Add($manageMenu)
+$menuBar.Items.Add($controlMenu)
+
 
 $labelIp = New-Object System.Windows.Forms.Label
 $labelIp.Text = "Server IP"
@@ -78,24 +114,24 @@ $labelRole.Location = New-Object System.Drawing.Point($X0, $Y3)
 $labelRole.Width = $W0
 
 $textIp = New-Object System.Windows.Forms.TextBox
-$textIp.Text = "0.0.0.0"
+$textIp.Text = $SERVERIP
 $textIp.Location = New-Object System.Drawing.Point($X1, $Y0)
 $textIp.Width = $W1
 
 $textPort = New-Object System.Windows.Forms.TextBox
-$textPort.Text = "12345"
+$textPort.Text = $SERVERPORT
 $textPort.Location = New-Object System.Drawing.Point($X1, $Y1)
 $textPort.Width = $W1
 
 $textTokens = New-Object System.Windows.Forms.TextBox
-$textTokens.Text = '["token01", "token02"]'
+$textTokens.Text = $TOKENS
 $textTokens.Location = New-Object System.Drawing.Point($X1, $Y2)
 $textTokens.Width = $W1
 
 $textBoxOutput = New-Object System.Windows.Forms.TextBox
-$textBoxOutput.Location = New-Object System.Drawing.Point($X0, $Y5)
+$textBoxOutput.Location = New-Object System.Drawing.Point($X0, $Y4)
 $textBoxOutput.Width = $W1 + $W0
-$textBoxOutput.Height = 300
+$textBoxOutput.Height = 200
 $textBoxOutput.AutoSize = $false
 $textBoxOutput.Enabled = $true
 $textBoxOutput.ScrollBars = "Vertical"
@@ -106,28 +142,11 @@ $comboRole.Items.Add("SERVER")
 $comboRole.Items.Add("CLIENT")
 $comboRole.Location = New-Object System.Drawing.Point($X1, $Y3)
 $comboRole.Width = $W1
-
-$buttonInstall = New-Object System.Windows.Forms.Button
-$buttonInstall.Text = 'Install'
-$buttonInstall.Location = New-Object System.Drawing.Point($BX0, $Y4)
-$buttonInstall.Width = $BW
-$buttonInstall.BackColor = [System.Drawing.Color]::Yellow
-
-$buttonUninstall = New-Object System.Windows.Forms.Button
-$buttonUninstall.Text = 'Uninstall'
-$buttonUninstall.Location = New-Object System.Drawing.Point($BX1, $Y4)
-$buttonUninstall.Width = $BW
-$buttonUninstall.BackColor = [System.Drawing.Color]::Red
-
-$buttonStart = New-Object System.Windows.Forms.Button
-$buttonStart.Text = 'Start'
-$buttonStart.Location = New-Object System.Drawing.Point($BX2, $Y4)
-$buttonStart.Width = $BW
-
-$buttonStop = New-Object System.Windows.Forms.Button
-$buttonStop.Text = 'Stop'
-$buttonStop.Location = New-Object System.Drawing.Point($BX3, $Y4)
-$buttonStop.Width = $BW
+if($ROLE -eq "CLIENT"){
+    $comboRole.SelectedIndex = 1
+} else {
+    $comboRole.SelectedIndex = 0
+}
 
 function initEnv () {
     $env:SERVERIP = $textIp.Text
@@ -148,7 +167,7 @@ function outputToGUI {
     }
 }
 
-$buttonInstall.Add_Click(
+$installMenu.Add_Click(
     {
         initEnv
         [System.Windows.Forms.MessageBox]::Show("Install will start, please wait","Install")
@@ -157,7 +176,7 @@ $buttonInstall.Add_Click(
     }
 )
 
-$buttonUninstall.Add_Click(
+$uninstallMenu.Add_Click(
     {
         initEnv
         [System.Windows.Forms.MessageBox]::Show("Uninstall will start, please wait","Uninstall")
@@ -166,7 +185,7 @@ $buttonUninstall.Add_Click(
     }
 )
 
-$buttonStart.Add_Click(
+$startMenu.Add_Click(
     {
         initEnv
         startPangolin | outputToGUI
@@ -175,7 +194,7 @@ $buttonStart.Add_Click(
     }
 )
 
-$buttonStop.Add_Click(
+$stopMenu.Add_Click(
     {
         initEnv
         stopPangolin | outputToGUI
@@ -183,10 +202,18 @@ $buttonStop.Add_Click(
     }
 )
 
+$restartVMMenu.Add_Click(
+    {
+        initEnv
+        restartVM | outputToGUI
+        [System.Windows.Forms.MessageBox]::Show("Done","Restart VM")
+    }
+)
+
 $main = New-Object System.Windows.Forms.Form
 $main.Text = "Pangolin"
 $main.Width = 435
-$main.Height = 510
+$main.Height = 410
 $main.FormBorderStyle = "FixedDialog"
 $main.MaximizeBox = $false
 $main.Controls.Add($labelIp)
@@ -197,9 +224,6 @@ $main.Controls.Add($labelTokens)
 $main.Controls.Add($labelRole)
 $main.Controls.Add($comboRole)
 $main.Controls.Add($textTokens)
-$main.Controls.Add($buttonInstall)
-$main.Controls.Add($buttonUninstall)
-$main.Controls.Add($buttonStart)
-$main.Controls.Add($buttonStop)
 $main.Controls.Add($textBoxOutput)
+$main.Controls.Add($menuBar)
 $main.ShowDialog()
