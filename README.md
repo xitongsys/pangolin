@@ -11,7 +11,7 @@ Pangolin is a Go implenmentation of TUN VPN.
 The pangolin can only run natively on Linux. But you can use docker to run it on Windows and Mac.
 
 ### Prerequisite
-* Install latest Docker.
+* Install latest Docker(For windows, Hyper-V and Linux Container).
 * Root/Administrator account.
 
 ### Windows 10
