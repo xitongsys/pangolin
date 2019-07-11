@@ -35,10 +35,10 @@ func (rs *RawServer) Start() error {
 			if n, err := f.Read(buf); err == nil && n > 0 {
 				if protocol, src, dst, err := header.GetBase(buf[:n]); err == nil {
 					key := protocol + ":" + src
-					if conni, ok := rs.ClientMap.Load(key); ok {
-						conn := conni.(Conn)
+					if rawClienti, ok := rs.ClientMap.Load(key); ok {
+						rawClient := rawClienti.(*RawClient)
 						if _, _, _, _, data, err := header.Get(buf[:n]); err == nil {
-							conn.InputChan <- string(data)
+							rawClient.RawConn.InputChan <- string(data)
 						}
 					}
 				}
@@ -48,9 +48,9 @@ func (rs *RawServer) Start() error {
 	return nil
 }
 
-func (rs *RawServer) CreateClient(client string) net.Conn {
-	conn := NewConn()
-	rs.ClientMap.Store(client, conn)
+func (rs *RawServer) CreateClient(client string, netConn net.Conn) net.Conn {
+	rawClient := NewRawClient(client, NewConn(), netConn)
+	rs.ClientMap.Store(client, rawClient)
 	go func(){
 		for {
 			s := <- conn.OutputChan
