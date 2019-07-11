@@ -12,7 +12,7 @@ var TUNCHANBUFFSIZE = 1024
 
 type TunServer struct {
 	TunConn Tun
-	//Key: proto:src->dst   Value: clientProtocol:clientIP:clientPort
+	//Key: clientProtocol:clientIP:clientPort  Value: chan string
 	RouteMap *cache.Cache
 	//write to tun
 	InputChan chan string
