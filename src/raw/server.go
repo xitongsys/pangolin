@@ -53,8 +53,8 @@ func (rs *RawServer) CreateClient(client string, netConn net.Conn) net.Conn {
 	rs.ClientMap.Store(client, rawClient)
 	go func(){
 		for {
-			s := <- conn.OutputChan
-			
+			_ := <- conn.OutputChan
+
 		}
 	}()
 	return conn

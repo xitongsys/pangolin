@@ -62,7 +62,10 @@ func (h *IPv4) CalChecksum() uint16 {
 	}
 	s = (s >> 16) + (s & 0xffff)
 	return uint16(s ^ 0xffffffff)
+}
 
+func (h *IPv4) ResetChecksum() {
+	h.Checksum = h.CalChecksum()
 }
 
 func (h *IPv4) Unmarshal(bs []byte) error {
