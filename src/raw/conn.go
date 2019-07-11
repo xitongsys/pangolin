@@ -48,7 +48,7 @@ func (conn *Conn) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
-func (conn *Conn) Close(){
+func (conn *Conn) Close() error { 
 	go func(){
 		defer func(){
 			recover()
@@ -61,6 +61,7 @@ func (conn *Conn) Close(){
 		}()
 		close(conn.OutputChan)
 	}()
+	return nil
 }
 
 func (conn *Conn) LocalAddr() net.Addr {
