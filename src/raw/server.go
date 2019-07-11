@@ -54,7 +54,7 @@ func (rs *RawServer) CreateClient(client string, netConn net.Conn) net.Conn {
 	go func(){
 		for {
 			s := <- conn.OutputChan
-
+			
 		}
 	}()
 	return conn
