@@ -70,6 +70,15 @@ func main() {
 
 			tcpClient.Start()
 
+		} else if cfg.Protocol == "ptcp" {
+			ptcpClient, err := client.NewPTcpClient(cfg)
+			if err != nil {
+				logging.Log.Error(err)
+				os.Exit(-1)
+			}
+
+			ptcpClient.Start()
+
 		} else {
 			udpClient, err := client.NewUdpClient(cfg)
 			if err != nil {
