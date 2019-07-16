@@ -2,6 +2,7 @@ package server
 
 import (
 	"comp"
+	"fmt"
 	"net"
 
 	"config"
@@ -18,14 +19,20 @@ type PTcpServer struct {
 	LoginManager *LoginManager
 }
 
+func getPTcpAddr(addr string) string {
+	ip, port := util.ParseAddr(addr)
+	return fmt.Sprintf("%v:%v", ip, port+1)
+}
+
 func NewPTcpServer(cfg *config.Config, loginManager *LoginManager) (*PTcpServer, error) {
-	ptcpListener, err := ptcp.Listen("tcp", cfg.ServerAddr)
+	addr := getPTcpAddr(cfg.ServerAddr)
+	ptcpListener, err := ptcp.Listen("ptcp", addr)
 	if err != nil {
 		return nil, err
 	}
 
 	return &PTcpServer{
-		Addr:         cfg.ServerAddr,
+		Addr:         addr,
 		Cfg:          cfg,
 		PTcpListener: ptcpListener,
 		LoginManager: loginManager,
