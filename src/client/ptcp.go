@@ -28,6 +28,7 @@ func getPTcpAddr(addr string) string {
 }
 
 func NewPTcpClient(cfg *config.Config) (*PTcpClient, error) {
+	ptcp.Init("eth0")
 	addr, tname, mtu := getPTcpAddr(cfg.ServerAddr), cfg.TunName, cfg.Mtu
 	conn, err := ptcp.Dial("ptcp", addr)
 	if err != nil {
