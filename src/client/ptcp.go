@@ -22,8 +22,13 @@ type PTcpClient struct {
 	TunConn   tun.Tun
 }
 
+func getPTcpAddr(addr string) string {
+	ip, port := util.ParseAddr(addr)
+	return fmt.Sprintf("%v:%v", ip, port+1)
+}
+
 func NewPTcpClient(cfg *config.Config) (*PTcpClient, error) {
-	addr, tname, mtu := cfg.ServerAddr, cfg.TunName, cfg.Mtu
+	addr, tname, mtu := getPTcpAddr(cfg.ServerAddr), cfg.TunName, cfg.Mtu
 	conn, err := ptcp.Dial("ptcp", addr)
 	if err != nil {
 		return nil, err
