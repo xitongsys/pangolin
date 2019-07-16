@@ -6,9 +6,9 @@ import (
 	"os"
 	"sync"
 
-	"server"
 	"config"
 	"logging"
+	"server"
 )
 
 var configFile = flag.String("c", "cfg.json", "")
@@ -17,7 +17,7 @@ var logLevel = flag.String("l", "info", "")
 func main() {
 	var err error
 	logging.Log.Info("Welcome to use Pangolin!")
-	defer func(){
+	defer func() {
 		logging.Log.Error(err)
 	}()
 
@@ -36,8 +36,14 @@ func main() {
 			logging.Log.Error(err)
 			os.Exit(-1)
 		}
-		
+
 		tcpServer, err := server.NewTcpServer(cfg, loginManager)
+		if err != nil {
+			logging.Log.Error(err)
+			os.Exit(-1)
+		}
+
+		ptcpServer, err := server.NewPTcpServer(cfg, loginManager)
 		if err != nil {
 			logging.Log.Error(err)
 			os.Exit(-1)
@@ -51,9 +57,10 @@ func main() {
 
 		loginManager.Start()
 		tcpServer.Start()
+		ptcpServer.Start()
 		udpServer.Start()
 
-	}else{
+	} else {
 		if cfg.Protocol == "tcp" {
 			tcpClient, err := client.NewTcpClient(cfg)
 			if err != nil {
@@ -63,7 +70,7 @@ func main() {
 
 			tcpClient.Start()
 
-		} else{
+		} else {
 			udpClient, err := client.NewUdpClient(cfg)
 			if err != nil {
 				logging.Log.Error(err)
