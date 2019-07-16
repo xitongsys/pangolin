@@ -8,7 +8,7 @@ import (
 	"logging"
 	"util"
 
-	"github.com/xitongsys/ptcp"
+	"github.com/xitongsys/ptcp/ptcp"
 )
 
 type PTcpServer struct {
@@ -18,7 +18,7 @@ type PTcpServer struct {
 	LoginManager *LoginManager
 }
 
-func NewPTcpServer(cfg *config.Config, loginManager *LoginManager) (*TcpServer, error) {
+func NewPTcpServer(cfg *config.Config, loginManager *LoginManager) (*PTcpServer, error) {
 	ptcpListener, err := ptcp.Listen("tcp", cfg.ServerAddr)
 	if err != nil {
 		return nil, err
