@@ -1,31 +1,35 @@
 package config
 
 import (
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 )
 
 type Config struct {
-	Role string `json:"role"`
-	ServerAddr string `json:"server"`
-	Tun string `json:"tun"`
-	TunName string `json:"tunname"`
-	Dns string `json:"dns"`
-	Mtu int `json:"mtu"`
-	Protocol string `json:"protocol"`
-	Tokens []string `json:"tokens"`
+	Role          string   `json:"role"`
+	ServerAddr    string   `json:"server"`
+	Tun           string   `json:"tun"`
+	TunName       string   `json:"tunname"`
+	PtcpInterface string   `json:"ptcpinterface"`
+	PtcpCn        int      `json:"ptcpcn"`
+	Dns           string   `json:"dns"`
+	Mtu           int      `json:"mtu"`
+	Protocol      string   `json:"protocol"`
+	Tokens        []string `json:"tokens"`
 }
 
 func NewConfig() *Config {
 	return &Config{
-		Role: "Server",
-		ServerAddr: "127.0.0.1:12345",
-		Tun: "10.0.0.1/8",
-		TunName: "tun0",
-		Dns: "8.8.8.8",
-		Mtu: 1500,
-		Protocol: "tcp",
-		Tokens: []string{},
+		Role:          "Server",
+		ServerAddr:    "127.0.0.1:12345",
+		Tun:           "10.0.0.1/8",
+		TunName:       "tun0",
+		PtcpInterface: "eth0",
+		PtcpCn:        2,
+		Dns:           "8.8.8.8",
+		Mtu:           1500,
+		Protocol:      "tcp",
+		Tokens:        []string{},
 	}
 }
 
@@ -51,5 +55,3 @@ func (cfg *Config) String() string {
 	res, _ := cfg.Marshal()
 	return string(res)
 }
-
-
