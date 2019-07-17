@@ -1,6 +1,6 @@
 {
     "role": "server",
-    "server": "0.0.0.0:{SERVERPORT}",
+    "server": "172.17.41.89:{SERVERPORT}",
     "tun": "10.0.0.2/8",
     "tunname": "tun0",
     "dns": "8.8.8.8",

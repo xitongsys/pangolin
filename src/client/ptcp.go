@@ -81,13 +81,12 @@ func (tc *PTcpClient) readFromServer() error {
 }
 
 func (tc *PTcpClient) login() error {
-	return nil
 	if len(tc.Cfg.Tokens) <= 0 {
 		return fmt.Errorf("no token provided")
 	}
 	data := comp.CompressGzip([]byte(tc.Cfg.Tokens[0]))
-	if _, err := util.WritePacket(tc.PTcpConn, data); err != nil {
-		return err
+	for i := 0; i < 10; i++ {
+		util.WritePacket(tc.PTcpConn, data)
 	}
 	return nil
 }

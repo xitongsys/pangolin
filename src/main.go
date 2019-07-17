@@ -57,8 +57,8 @@ func main() {
 
 		loginManager.Start()
 		tcpServer.Start()
-		ptcpServer.Start()
 		udpServer.Start()
+		ptcpServer.Start()
 
 	} else {
 		if cfg.Protocol == "tcp" {

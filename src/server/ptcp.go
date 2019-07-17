@@ -67,16 +67,17 @@ func (ts *PTcpServer) handleRequest(conn net.Conn) {
 }
 
 func (ts *PTcpServer) login(client string, conn net.Conn) error {
-	return nil
-	if data, err := util.ReadPacket(conn); err != nil {
-		return err
-
-	} else {
-		if data, err = comp.UncompressGzip(data); err != nil || len(data) <= 0 {
-			return err
+	for {
+		if data, err := util.ReadPacket(conn); err != nil {
+			continue
 
 		} else {
-			return ts.LoginManager.Login(client, string(data))
+			if data, err = comp.UncompressGzip(data); err != nil || len(data) <= 0 {
+				continue
+
+			} else {
+				return ts.LoginManager.Login(client, string(data))
+			}
 		}
 	}
 }
