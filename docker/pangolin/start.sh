@@ -8,7 +8,7 @@ function start_server ()
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source $ip
 	iptables -P FORWARD ACCEPT
-	/pangolin/main -c /pangolin/configs/cfg_server.json 
+	/pangolin/main -c /pangolin/configs/cfg_server.json -l debug
 }
 
 function start_client ()
@@ -24,7 +24,7 @@ function start_client ()
 	route add $SERVERIP gw $gw
 	route add default gw 10.0.0.1
 	echo "nameserver 8.8.8.8" > /etc/resolv.conf
-	/pangolin/main -c /pangolin/configs/cfg_client.json 
+	/pangolin/main -c /pangolin/configs/cfg_client.json  -l debug
 }
 
 function replace ()

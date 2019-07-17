@@ -26,7 +26,7 @@ func getPTcpAddr(addr string) string {
 
 func NewPTcpServer(cfg *config.Config, loginManager *LoginManager) (*PTcpServer, error) {
 	addr := getPTcpAddr(cfg.ServerAddr)
-	ptcp.Init("eth0")
+	ptcp.Init(cfg.PtcpInterface, cfg.PtcpCn)
 	ptcpListener, err := ptcp.Listen("ptcp", addr)
 	if err != nil {
 		return nil, err
