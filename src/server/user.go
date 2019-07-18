@@ -56,7 +56,7 @@ func (user *User) Start() {
 				data, err = util.ReadPacket(user.Conn)
 
 			} else {
-				if n, err = user.Conn.Read(buf); err != nil && n > 0 {
+				if n, err = user.Conn.Read(buf); err == nil && n > 0 {
 					data = buf[:n]
 				}
 			}
