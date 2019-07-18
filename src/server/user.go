@@ -50,10 +50,15 @@ func (user *User) Start() {
 		for {
 			var err error
 			var data []byte
+			var n int
+
 			if user.Protocol == "tcp" {
 				data, err = util.ReadPacket(user.Conn)
+
 			} else {
-				_, err = user.Conn.Read(buf)
+				if n, err = user.Conn.Read(buf); err != nil && n > 0 {
+					data = buf[:n]
+				}
 			}
 
 			if err != nil {
@@ -100,7 +105,7 @@ func (user *User) Start() {
 							user.Close()
 							return
 						}
-						logging.Log.Debugf("TcpToClient: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Client, protocol, ln, src, dst)
+						logging.Log.Debugf("%vToClient: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
 					}
 				}
 			}
