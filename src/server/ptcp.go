@@ -67,11 +67,13 @@ func (ts *PTcpServer) handleRequest(conn net.Conn) {
 }
 
 func (ts *PTcpServer) login(client string, conn net.Conn) error {
+	buf := make([]byte, 1024)
 	for {
-		if data, err := util.ReadPacket(conn); err != nil {
+		if n, err := conn.Read(buf); err != nil || n <= 0 {
 			continue
 
 		} else {
+			data := buf[:n]
 			if data, err = comp.UncompressGzip(data); err != nil || len(data) <= 0 {
 				continue
 
