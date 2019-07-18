@@ -56,7 +56,7 @@ func (tc *PTcpClient) writeToServer() {
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
 					cmpData := comp.CompressGzip(endata)
-					util.WritePacket(tc.PTcpConn, cmpData)
+					tc.PTcpConn.Write(cmpData)
 					logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 				}
 			}
@@ -66,8 +66,9 @@ func (tc *PTcpClient) writeToServer() {
 
 func (tc *PTcpClient) readFromServer() error {
 	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
+	data := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
-		if data, err := util.ReadPacket(tc.PTcpConn); err == nil {
+		if n, err := tc.PTcpConn.Read(data); err == nil && n > 0 {
 			if data, err := comp.UncompressGzip(data); err == nil && len(data) > 0 {
 				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
@@ -86,7 +87,7 @@ func (tc *PTcpClient) login() error {
 	}
 	data := comp.CompressGzip([]byte(tc.Cfg.Tokens[0]))
 	for i := 0; i < 10; i++ {
-		util.WritePacket(tc.PTcpConn, data)
+		tc.PTcpConn.Write(data)
 	}
 	return nil
 }

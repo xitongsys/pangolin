@@ -5,8 +5,8 @@ import (
 	"net"
 
 	"config"
-	"util"
 	"logging"
+	"util"
 )
 
 type TcpServer struct {
@@ -65,7 +65,7 @@ func (ts *TcpServer) login(client string, conn net.Conn) error {
 			return err
 
 		} else {
-			return ts.LoginManager.Login(client, string(data))
+			return ts.LoginManager.Login(client, "tcp", string(data))
 		}
 	}
 }
