@@ -1,21 +1,22 @@
 package server
 
 import (
-	"net"
 	"fmt"
+	"net"
 	"sync"
 
 	"config"
-	"tun"
 	"logging"
+	"tun"
 )
+
 //todo: add sync.Mutx for Users change
 type LoginManager struct {
-	//key: clientProtocol:clientIP:clientPort  value: key for AES 
-	Users map[string]*User
-	Tokens map[string]bool
-	Cfg *config.Config
-	TunServer *tun.TunServer
+	//key: clientProtocol:clientIP:clientPort  value: key for AES
+	Users      map[string]*User
+	Tokens     map[string]bool
+	Cfg        *config.Config
+	TunServer  *tun.TunServer
 	DhcpServer *Dhcp
 
 	Mutex sync.Mutex
@@ -28,10 +29,10 @@ func NewLoginManager(cfg *config.Config) (*LoginManager, error) {
 	}
 
 	lm := &LoginManager{
-		Users: map[string]*User{},
-		Tokens: map[string]bool{},
-		Cfg: cfg,
-		TunServer: tunServer,
+		Users:      map[string]*User{},
+		Tokens:     map[string]bool{},
+		Cfg:        cfg,
+		TunServer:  tunServer,
 		DhcpServer: NewDhcp(cfg),
 	}
 
@@ -41,7 +42,7 @@ func NewLoginManager(cfg *config.Config) (*LoginManager, error) {
 	return lm, nil
 }
 
-func (lm *LoginManager) Login(client string, token string) error {
+func (lm *LoginManager) Login(client string, protocol string, token string) error {
 	defer lm.Mutex.Unlock()
 	lm.Mutex.Lock()
 	if _, ok := lm.Tokens[token]; ok {
@@ -53,7 +54,7 @@ func (lm *LoginManager) Login(client string, token string) error {
 			return err
 		}
 
-		user := NewUser(client, localTunIp, token, nil, lm.Logout)
+		user := NewUser(client, protocol, localTunIp, token, nil, lm.Logout)
 		lm.Users[client] = user
 
 		logging.Log.Infof("User login: client: %v localTunIp: %v", user.Client, user.LocalTunIp)
@@ -85,7 +86,7 @@ func (lm *LoginManager) StartClient(client string, conn net.Conn) {
 	}
 }
 
-func (lm *LoginManager) GetUser(client string) *User{
+func (lm *LoginManager) GetUser(client string) *User {
 	if user, ok := lm.Users[client]; ok {
 		return user
 	}

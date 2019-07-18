@@ -76,7 +76,7 @@ func (ts *PTcpServer) login(client string, conn net.Conn) error {
 				continue
 
 			} else {
-				return ts.LoginManager.Login(client, string(data))
+				return ts.LoginManager.Login(client, "ptcp", string(data))
 			}
 		}
 	}
