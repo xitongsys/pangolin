@@ -74,7 +74,7 @@ func (user *User) Start() {
 							user.RemoteTunIp = remoteIp
 							Snat(data, user.LocalTunIp)
 							user.ConnToTunChan <- string(data)
-							logging.Log.Debugf("TcpFromClient: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Client, protocol, ln, src, dst)
+							logging.Log.Debugf("From %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
 						}
 					}
 				}
@@ -97,6 +97,7 @@ func (user *User) Start() {
 					if endata, err := encrypt.EncryptAES(data, encryptKey); err == nil {
 						if user.Protocol == "tcp" {
 							_, err = util.WritePacket(user.Conn, comp.CompressGzip(endata))
+
 						} else {
 							_, err = user.Conn.Write(comp.CompressGzip(endata))
 						}
@@ -105,7 +106,7 @@ func (user *User) Start() {
 							user.Close()
 							return
 						}
-						logging.Log.Debugf("%vToClient: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
+						logging.Log.Debugf("To %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
 					}
 				}
 			}
