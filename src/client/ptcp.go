@@ -66,9 +66,10 @@ func (tc *PTcpClient) writeToServer() {
 
 func (tc *PTcpClient) readFromServer() error {
 	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
-	data := make([]byte, tc.TunConn.GetMtu()*2)
+	buf := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
-		if n, err := tc.PTcpConn.Read(data); err == nil && n > 0 {
+		if n, err := tc.PTcpConn.Read(buf); err == nil && n > 0 {
+			data := buf[:n]
 			if data, err := comp.UncompressGzip(data); err == nil && len(data) > 0 {
 				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
