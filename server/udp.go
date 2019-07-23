@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/xitongsys/pangolin/cache"
-	"github.com/xitongsys/pangolin/comp"
 	"github.com/xitongsys/pangolin/config"
 	"github.com/xitongsys/pangolin/header"
 	"github.com/xitongsys/pangolin/logging"
@@ -58,14 +57,10 @@ func (us *UdpServer) Start() error {
 		data := make([]byte, us.LoginManager.TunServer.TunConn.GetMtu()*2)
 		for {
 			if n, caddr, err := us.UdpConn.ReadFromUDP(data); err == nil && n > 0 {
-				uncmpData, errc := comp.UncompressGzip(data[:n])
-				if errc != nil {
-					continue
-				}
-				if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
+				if protocol, src, dst, err := header.GetBase(data[:n]); err == nil {
 					key := protocol + ":" + src + ":" + dst
 					us.RouteMap.Put(key, caddr.String())
-					us.ConnToTunChan <- string(uncmpData)
+					us.ConnToTunChan <- string(data[:n])
 					logging.Log.Debugf("UdpFromClient: client:%v, protocol:%v, src:%v, dst:%v", caddr, protocol, src, dst)
 				}
 			}
@@ -88,8 +83,7 @@ func (us *UdpServer) Start() error {
 					if clientAddrI != nil {
 						clientAddr := clientAddrI.(string)
 						if add, err := net.ResolveUDPAddr("udp", clientAddr); err == nil {
-							cmpData := comp.CompressGzip([]byte(data))
-							us.UdpConn.WriteToUDP(cmpData, add)
+							us.UdpConn.WriteToUDP([]byte(data), add)
 							logging.Log.Debugf("UdpToClient: client:%v, protocol:%v, src:%v, dst:%v", clientAddr, protocol, src, dst)
 						}
 					}

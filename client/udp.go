@@ -3,7 +3,6 @@ package client
 import (
 	"net"
 
-	"github.com/xitongsys/pangolin/comp"
 	"github.com/xitongsys/pangolin/config"
 	"github.com/xitongsys/pangolin/header"
 	"github.com/xitongsys/pangolin/logging"
@@ -39,8 +38,7 @@ func (uc *UdpClient) writeToServer() {
 	for {
 		if n, err := uc.TunConn.Read(data); err == nil && n > 0 {
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
-				cmpData := comp.CompressGzip(data[:n])
-				uc.UdpConn.Write(cmpData)
+				uc.UdpConn.Write(data[:n])
 				logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 			}
 		}
@@ -51,12 +49,8 @@ func (uc *UdpClient) readFromServer() error {
 	data := make([]byte, uc.TunConn.GetMtu()*2)
 	for {
 		if n, err := uc.UdpConn.Read(data); err == nil && n > 0 {
-			uncmpData, err2 := comp.UncompressGzip(data[:n])
-			if err2 != nil {
-				continue
-			}
-			if protocol, src, dst, err := header.GetBase(uncmpData); err == nil {
-				uc.TunConn.Write(uncmpData)
+			if protocol, src, dst, err := header.GetBase(data[:n]); err == nil {
+				uc.TunConn.Write(data[:n])
 				logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 			}
 		}

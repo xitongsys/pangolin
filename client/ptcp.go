@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/xitongsys/pangolin/comp"
 	"github.com/xitongsys/pangolin/config"
 	"github.com/xitongsys/pangolin/encrypt"
 	"github.com/xitongsys/pangolin/header"
@@ -54,8 +53,7 @@ func (tc *PTcpClient) writeToServer() {
 		if n, err := tc.TunConn.Read(data); err == nil && n > 0 {
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
-					cmpData := comp.CompressGzip(endata)
-					tc.PTcpConn.Write(cmpData)
+					tc.PTcpConn.Write(endata)
 					logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 				}
 			}
@@ -69,12 +67,10 @@ func (tc *PTcpClient) readFromServer() error {
 	for {
 		if n, err := tc.PTcpConn.Read(buf); err == nil && n > 0 {
 			data := buf[:n]
-			if data, err := comp.UncompressGzip(data); err == nil && len(data) > 0 {
-				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
-					if protocol, src, dst, err := header.GetBase(data); err == nil {
-						tc.TunConn.Write(data)
-						logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, len(data), src, dst)
-					}
+			if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
+				if protocol, src, dst, err := header.GetBase(data); err == nil {
+					tc.TunConn.Write(data)
+					logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, len(data), src, dst)
 				}
 			}
 		}
@@ -85,7 +81,7 @@ func (tc *PTcpClient) login() error {
 	if len(tc.Cfg.Tokens) <= 0 {
 		return fmt.Errorf("no token provided")
 	}
-	data := comp.CompressGzip([]byte(tc.Cfg.Tokens[0]))
+	data := []byte(tc.Cfg.Tokens[0])
 	for i := 0; i < 10; i++ {
 		tc.PTcpConn.Write(data)
 	}

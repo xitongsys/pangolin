@@ -3,7 +3,6 @@ package server
 import (
 	"net"
 
-	"github.com/xitongsys/pangolin/comp"
 	"github.com/xitongsys/pangolin/config"
 	"github.com/xitongsys/pangolin/logging"
 	"github.com/xitongsys/pangolin/util"
@@ -61,11 +60,6 @@ func (ts *TcpServer) login(client string, conn net.Conn) error {
 		return err
 
 	} else {
-		if data, err = comp.UncompressGzip(data); err != nil || len(data) <= 0 {
-			return err
-
-		} else {
-			return ts.LoginManager.Login(client, "tcp", string(data))
-		}
+		return ts.LoginManager.Login(client, "tcp", string(data))
 	}
 }

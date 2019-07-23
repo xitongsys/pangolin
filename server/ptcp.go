@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/xitongsys/pangolin/comp"
 	"github.com/xitongsys/pangolin/config"
 	"github.com/xitongsys/pangolin/logging"
 	"github.com/xitongsys/pangolin/util"
@@ -73,12 +72,7 @@ func (ts *PTcpServer) login(client string, conn net.Conn) error {
 
 		} else {
 			data := buf[:n]
-			if data, err = comp.UncompressGzip(data); err != nil || len(data) <= 0 {
-				continue
-
-			} else {
-				return ts.LoginManager.Login(client, "ptcp", string(data))
-			}
+			return ts.LoginManager.Login(client, "ptcp", string(data))
 		}
 	}
 }

@@ -3,7 +3,6 @@ package server
 import (
 	"net"
 
-	"github.com/xitongsys/pangolin/comp"
 	"github.com/xitongsys/pangolin/encrypt"
 	"github.com/xitongsys/pangolin/header"
 	"github.com/xitongsys/pangolin/logging"
@@ -67,15 +66,13 @@ func (user *User) Start() {
 			}
 
 			if ln := len(data); ln > 0 {
-				if data, err = comp.UncompressGzip(data); err == nil && len(data) > 0 {
-					if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
-						if protocol, src, dst, err := header.GetBase(data); err == nil {
-							remoteIp, _ := header.ParseAddr(src)
-							user.RemoteTunIp = remoteIp
-							Snat(data, user.LocalTunIp)
-							user.ConnToTunChan <- string(data)
-							logging.Log.Debugf("From %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
-						}
+				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
+					if protocol, src, dst, err := header.GetBase(data); err == nil {
+						remoteIp, _ := header.ParseAddr(src)
+						user.RemoteTunIp = remoteIp
+						Snat(data, user.LocalTunIp)
+						user.ConnToTunChan <- string(data)
+						logging.Log.Debugf("From %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
 					}
 				}
 			}
@@ -96,10 +93,10 @@ func (user *User) Start() {
 					Dnat(data, user.RemoteTunIp)
 					if endata, err := encrypt.EncryptAES(data, encryptKey); err == nil {
 						if user.Protocol == "tcp" {
-							_, err = util.WritePacket(user.Conn, comp.CompressGzip(endata))
+							_, err = util.WritePacket(user.Conn, endata)
 
 						} else {
-							_, err = user.Conn.Write(comp.CompressGzip(endata))
+							_, err = user.Conn.Write(endata)
 						}
 
 						if err != nil {
