@@ -11,7 +11,6 @@ type Config struct {
 	Tun           string   `json:"tun"`
 	TunName       string   `json:"tunname"`
 	PtcpInterface string   `json:"ptcpinterface"`
-	PtcpCn        int      `json:"ptcpcn"`
 	Dns           string   `json:"dns"`
 	Mtu           int      `json:"mtu"`
 	Protocol      string   `json:"protocol"`
@@ -25,7 +24,6 @@ func NewConfig() *Config {
 		Tun:           "10.0.0.1/8",
 		TunName:       "tun0",
 		PtcpInterface: "eth0",
-		PtcpCn:        2,
 		Dns:           "8.8.8.8",
 		Mtu:           1500,
 		Protocol:      "tcp",
