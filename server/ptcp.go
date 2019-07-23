@@ -66,13 +66,23 @@ func (ts *PTcpServer) handleRequest(conn net.Conn) {
 
 func (ts *PTcpServer) login(client string, conn net.Conn) error {
 	buf := make([]byte, 1024)
-	for {
-		if n, err := conn.Read(buf); err != nil || n <= 0 {
-			continue
+	var n int
+	var err error
 
-		} else {
-			data := buf[:n]
-			return ts.LoginManager.Login(client, "ptcp", string(data))
+	for {
+		n, err = conn.Read(buf)
+		if err != nil {
+			return fmt.Errorf("conn closed")
+		}
+		if n <= 0 {
+			continue
+		}
+
+		data := buf[:n]
+		err = ts.LoginManager.Login(client, "ptcp", string(data))
+		if err == nil {
+			break
 		}
 	}
+	return err
 }
