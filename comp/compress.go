@@ -17,7 +17,7 @@ func reverse(buf []byte) []byte {
 }
 
 func UncompressGzip(buf []byte) (bs []byte, rerr error) {
-	return bs, nil
+	return buf, nil
 	defer func() {
 		if err := recover(); err != nil {
 			rerr = fmt.Errorf("%v", err)
