@@ -17,6 +17,7 @@ func reverse(buf []byte) []byte {
 }
 
 func UncompressGzip(buf []byte) (bs []byte, rerr error) {
+	return bs, nil
 	defer func() {
 		if err := recover(); err != nil {
 			rerr = fmt.Errorf("%v", err)
@@ -29,6 +30,7 @@ func UncompressGzip(buf []byte) (bs []byte, rerr error) {
 }
 
 func CompressGzip(buf []byte) []byte {
+	return buf
 	buf = buf
 	var res bytes.Buffer
 	gzipWriter := gzip.NewWriter(&res)
