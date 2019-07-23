@@ -5,7 +5,7 @@
     "tunname": "tun0",
 	"ptcpinterface": "eth0",
     "dns": "8.8.8.8",
-    "mtu": 1500,
+    "mtu": 1200,
     "protocol": "tcp",
     "tokens": {TOKENS}
 }
