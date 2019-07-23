@@ -57,7 +57,7 @@ func ReCalUdpCheckSum(bs []byte) error {
 		return fmt.Errorf("too short")
 	}
 	ipvh, ipps := IPv4{}, IPv4Pseudo{}
-	if err := ipvh.Unmarshal(bs); err!= nil {
+	if err := ipvh.Unmarshal(bs); err != nil {
 		return err
 	}
 	ipps.Src = ipvh.Src
@@ -71,20 +71,20 @@ func ReCalUdpCheckSum(bs []byte) error {
 	udpbs[6] = 0
 	udpbs[7] = 0
 
-	if len(udpbs) % 2 == 1 {
+	if len(udpbs)%2 == 1 {
 		udpbs = append(udpbs, byte(0))
 	}
 
 	s := uint32(0)
-	for i := 0; i<len(ippsbs); i+=2 {
-		s +=  uint32(binary.BigEndian.Uint16(ippsbs[i : i+2]))
+	for i := 0; i < len(ippsbs); i += 2 {
+		s += uint32(binary.BigEndian.Uint16(ippsbs[i : i+2]))
 	}
-	for i := 0; i<len(udpbs); i+=2 {
-		s +=  uint32(binary.BigEndian.Uint16(udpbs[i : i+2]))
+	for i := 0; i < len(udpbs); i += 2 {
+		s += uint32(binary.BigEndian.Uint16(udpbs[i : i+2]))
 	}
-	
-	for (s>>16) > 0 {
-		s = (s>>16) + (s&0xffff)
+
+	for (s >> 16) > 0 {
+		s = (s >> 16) + (s & 0xffff)
 	}
 	binary.BigEndian.PutUint16(udpbs[6:], ^uint16(s))
 	return nil

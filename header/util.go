@@ -30,11 +30,11 @@ func Str2IP(s string) uint32 {
 func ParseAddr(src string) (string, int) {
 	res := strings.Split(src, ":")
 	if len(res) == 0 {
-		return "",-1
-	}else if len(res) == 1 {//":port"
+		return "", -1
+	} else if len(res) == 1 { //":port"
 		port, _ := strconv.Atoi(res[0])
 		return "127.0.0.1", port
-	}else{
+	} else {
 		port, _ := strconv.Atoi(res[1])
 		return res[0], port
 	}
@@ -44,11 +44,11 @@ func ParseAddr(src string) (string, int) {
 func ParseNet(src string) (string, int) {
 	res := strings.Split(src, "/")
 	if len(res) == 0 {
-		return "",-1
-	}else if len(res) == 1 {//"/mask"
+		return "", -1
+	} else if len(res) == 1 { //"/mask"
 		mask, _ := strconv.Atoi(res[0])
 		return "127.0.0.1", mask
-	}else{
+	} else {
 		mask, _ := strconv.Atoi(res[1])
 		return res[0], mask
 	}
@@ -56,8 +56,8 @@ func ParseNet(src string) (string, int) {
 
 func MaskNumber2Mask(mask int) uint32 {
 	res := uint32(0)
-	for i := 0; i<mask; i++ {
-		res |= (uint32(1)<<uint32(i))
+	for i := 0; i < mask; i++ {
+		res |= (uint32(1) << uint32(i))
 	}
-	return res<<uint32(32 - mask)
+	return res << uint32(32-mask)
 }

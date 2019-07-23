@@ -82,17 +82,17 @@ func (h *IPv4) Unmarshal(bs []byte) error {
 	h.Checksum = binary.BigEndian.Uint16(bs[10:12])
 	h.Src = binary.BigEndian.Uint32(bs[12:16])
 	h.Dst = binary.BigEndian.Uint32(bs[16:20])
-	headerLen := int(h.HeaderLen()) 
+	headerLen := int(h.HeaderLen())
 	if headerLen > 20 {
 		h.Opt = bs[20:headerLen]
-	}else{
+	} else {
 		h.Opt = []byte{}
 	}
 	return nil
 }
 
 func (h *IPv4) MarshalRaw() []byte {
-	headerLen := int(h.HeaderLen()) 
+	headerLen := int(h.HeaderLen())
 	res := make([]byte, headerLen)
 	res[0] = byte(h.VerIHL)
 	res[1] = byte(h.Tos)
@@ -104,8 +104,8 @@ func (h *IPv4) MarshalRaw() []byte {
 	binary.BigEndian.PutUint16(res[10:], h.Checksum)
 	binary.BigEndian.PutUint32(res[12:], h.Src)
 	binary.BigEndian.PutUint32(res[16:], h.Dst)
-	for i:=0; i<len(h.Opt); i++ {
-		res[20 + i] = h.Opt[i]
+	for i := 0; i < len(h.Opt); i++ {
+		res[20+i] = h.Opt[i]
 	}
 	return res
 }

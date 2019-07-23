@@ -1,14 +1,14 @@
 package main
 
 import (
-	"client"
 	"flag"
 	"os"
 	"sync"
 
-	"config"
-	"logging"
-	"server"
+	"github.com/xitongsys/pangolin/client"
+	"github.com/xitongsys/pangolin/config"
+	"github.com/xitongsys/pangolin/logging"
+	"github.com/xitongsys/pangolin/server"
 )
 
 var configFile = flag.String("c", "cfg.json", "")

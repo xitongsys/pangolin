@@ -3,11 +3,11 @@ package server
 import (
 	"net"
 
-	"comp"
-	"encrypt"
-	"header"
-	"logging"
-	"util"
+	"github.com/xitongsys/pangolin/comp"
+	"github.com/xitongsys/pangolin/encrypt"
+	"github.com/xitongsys/pangolin/header"
+	"github.com/xitongsys/pangolin/logging"
+	"github.com/xitongsys/pangolin/util"
 )
 
 var USERCHANBUFFERSIZE = 1024

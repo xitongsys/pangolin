@@ -1,12 +1,12 @@
 package server
 
 import (
-	"comp"
 	"net"
 
-	"config"
-	"logging"
-	"util"
+	"github.com/xitongsys/pangolin/comp"
+	"github.com/xitongsys/pangolin/config"
+	"github.com/xitongsys/pangolin/logging"
+	"github.com/xitongsys/pangolin/util"
 )
 
 type TcpServer struct {

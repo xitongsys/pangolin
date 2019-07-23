@@ -43,16 +43,15 @@ func Get(data []byte) (proto string, iph IPv4, udph UDP, tcph TCP, packetData []
 	if iph.Protocol == uint8(UDPID) {
 		proto = "udp"
 		udph.Unmarshal(data[iph.HeaderLen():])
-		packetData = data[iph.HeaderLen()+8:iph.HeaderLen()+udph.LenBytes()]
+		packetData = data[iph.HeaderLen()+8 : iph.HeaderLen()+udph.LenBytes()]
 
 	} else if iph.Protocol == uint8(TCPID) {
 		proto = "tcp"
 		tcph.Unmarshal(data[iph.HeaderLen():])
-		packetData = data[iph.HeaderLen()+tcph.HeaderLen():iph.LenBytes()]
+		packetData = data[iph.HeaderLen()+tcph.HeaderLen() : iph.LenBytes()]
 
 	} else {
 		err = fmt.Errorf("Protocol Unsupported: id=%d", iph.Protocol)
 	}
 	return
 }
-

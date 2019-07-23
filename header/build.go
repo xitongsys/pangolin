@@ -5,23 +5,23 @@ func BuildUdpPacket(src string, dst string, data []byte) []byte {
 	dstIp, dstPort := ParseAddr(dst)
 
 	ipv4Header := IPv4{
-		VerIHL: 0x45,
-		Tos: 0,
-		Len: uint16(20 + 8 + len(data)),
-		Id: 0,
-		Offset: 0,
-		TTL: 255,
+		VerIHL:   0x45,
+		Tos:      0,
+		Len:      uint16(20 + 8 + len(data)),
+		Id:       0,
+		Offset:   0,
+		TTL:      255,
 		Protocol: 0x11,
 		Checksum: 0,
-		Src: Str2IP(srcIp),
-		Dst: Str2IP(dstIp),
+		Src:      Str2IP(srcIp),
+		Dst:      Str2IP(dstIp),
 	}
 	ipv4Header.ResetChecksum()
 
 	udpHeader := UDP{
-		SrcPort: uint16(srcPort),
-		DstPort: uint16(dstPort),
-		Len: uint16(8 + len(data)),
+		SrcPort:  uint16(srcPort),
+		DstPort:  uint16(dstPort),
+		Len:      uint16(8 + len(data)),
 		Checksum: 0,
 	}
 
@@ -32,35 +32,35 @@ func BuildUdpPacket(src string, dst string, data []byte) []byte {
 	ReCalUdpCheckSum(bs)
 
 	return bs
-} 
+}
 
 func BuildTcpPacket(src string, dst string, data []byte) []byte {
 	srcIp, srcPort := ParseAddr(src)
 	dstIp, dstPort := ParseAddr(dst)
 
 	ipv4Header := IPv4{
-		VerIHL: 0x45,
-		Tos: 0,
-		Len: uint16(20 + 20 + len(data)),
-		Id: 0,
-		Offset: 0,
-		TTL: 255,
+		VerIHL:   0x45,
+		Tos:      0,
+		Len:      uint16(20 + 20 + len(data)),
+		Id:       0,
+		Offset:   0,
+		TTL:      255,
 		Protocol: 0x06,
 		Checksum: 0,
-		Src: Str2IP(srcIp),
-		Dst: Str2IP(dstIp),
+		Src:      Str2IP(srcIp),
+		Dst:      Str2IP(dstIp),
 	}
 	ipv4Header.ResetChecksum()
 
 	tcpHeader := TCP{
-		SrcPort: uint16(srcPort),
-		DstPort: uint16(dstPort),
-		Seq: 1,
-		Ack: 1,
-		Offset: 0x50,
-		Flags: 0,
-		Win: 0x10,
-		Checksum: 0,
+		SrcPort:    uint16(srcPort),
+		DstPort:    uint16(dstPort),
+		Seq:        1,
+		Ack:        1,
+		Offset:     0x50,
+		Flags:      0,
+		Win:        0x10,
+		Checksum:   0,
 		UrgPointer: 0,
 	}
 
@@ -71,4 +71,4 @@ func BuildTcpPacket(src string, dst string, data []byte) []byte {
 
 	bs = append(bs, data...)
 	return bs
-} 
+}

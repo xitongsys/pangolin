@@ -4,33 +4,30 @@ import (
 	"fmt"
 	"net"
 
-	"comp"
-	"config"
-	"encrypt"
-	"header"
-	"logging"
-	"tun"
-	"util"
-
-	"github.com/xitongsys/ptcp/ptcp"
+	"github.com/xitongsys/pangolin/comp"
+	"github.com/xitongsys/pangolin/config"
+	"github.com/xitongsys/pangolin/encrypt"
+	"github.com/xitongsys/pangolin/header"
+	"github.com/xitongsys/pangolin/logging"
+	"github.com/xitongsys/pangolin/tun"
+	"github.com/xitongsys/pangolin/util"
 )
 
-type PTcpClient struct {
+type TcpClient struct {
 	ServerAdd string
 	Cfg       *config.Config
-	PTcpConn  net.Conn
+	TcpConn   *net.TCPConn
 	TunConn   tun.Tun
 }
 
-func getPTcpAddr(addr string) string {
-	ip, port := util.ParseAddr(addr)
-	return fmt.Sprintf("%v:%v", ip, port+1)
-}
+func NewTcpClient(cfg *config.Config) (*TcpClient, error) {
+	saddr, tname, mtu := cfg.ServerAddr, cfg.TunName, cfg.Mtu
+	addr, err := net.ResolveTCPAddr("", saddr)
+	if err != nil {
+		return nil, err
+	}
 
-func NewPTcpClient(cfg *config.Config) (*PTcpClient, error) {
-	ptcp.Init(cfg.PtcpInterface)
-	addr, tname, mtu := getPTcpAddr(cfg.ServerAddr), cfg.TunName, cfg.Mtu
-	conn, err := ptcp.Dial("ptcp", addr)
+	conn, err := net.DialTCP("tcp4", nil, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -40,15 +37,15 @@ func NewPTcpClient(cfg *config.Config) (*PTcpClient, error) {
 		return nil, err
 	}
 
-	return &PTcpClient{
-		ServerAdd: addr,
+	return &TcpClient{
+		ServerAdd: saddr,
 		Cfg:       cfg,
-		PTcpConn:  conn,
+		TcpConn:   conn,
 		TunConn:   tun,
 	}, nil
 }
 
-func (tc *PTcpClient) writeToServer() {
+func (tc *TcpClient) writeToServer() {
 	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
 	data := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
@@ -56,7 +53,7 @@ func (tc *PTcpClient) writeToServer() {
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
 				if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
 					cmpData := comp.CompressGzip(endata)
-					tc.PTcpConn.Write(cmpData)
+					util.WritePacket(tc.TcpConn, cmpData)
 					logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
 				}
 			}
@@ -64,12 +61,10 @@ func (tc *PTcpClient) writeToServer() {
 	}
 }
 
-func (tc *PTcpClient) readFromServer() error {
+func (tc *TcpClient) readFromServer() error {
 	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
-	buf := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
-		if n, err := tc.PTcpConn.Read(buf); err == nil && n > 0 {
-			data := buf[:n]
+		if data, err := util.ReadPacket(tc.TcpConn); err == nil {
 			if data, err := comp.UncompressGzip(data); err == nil && len(data) > 0 {
 				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
 					if protocol, src, dst, err := header.GetBase(data); err == nil {
@@ -82,19 +77,19 @@ func (tc *PTcpClient) readFromServer() error {
 	}
 }
 
-func (tc *PTcpClient) login() error {
+func (tc *TcpClient) login() error {
 	if len(tc.Cfg.Tokens) <= 0 {
 		return fmt.Errorf("no token provided")
 	}
 	data := comp.CompressGzip([]byte(tc.Cfg.Tokens[0]))
-	for i := 0; i < 10; i++ {
-		tc.PTcpConn.Write(data)
+	if _, err := util.WritePacket(tc.TcpConn, data); err != nil {
+		return err
 	}
 	return nil
 }
 
-func (tc *PTcpClient) Start() error {
-	logging.Log.Info("PTcpClient started")
+func (tc *TcpClient) Start() error {
+	logging.Log.Info("TcpClient started")
 	if err := tc.login(); err != nil {
 		return err
 	}
@@ -103,9 +98,9 @@ func (tc *PTcpClient) Start() error {
 	return nil
 }
 
-func (tc *PTcpClient) Stop() error {
-	logging.Log.Info("PTcpClient stopped")
-	tc.PTcpConn.Close()
+func (tc *TcpClient) Stop() error {
+	logging.Log.Info("TcpClient stopped")
+	tc.TcpConn.Close()
 	tc.TunConn.Close()
 	return nil
 }

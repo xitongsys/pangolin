@@ -3,11 +3,11 @@ package client
 import (
 	"net"
 
-	"comp"
-	"tun"
-	"header"
-	"config"
-	"logging"
+	"github.com/xitongsys/pangolin/comp"
+	"github.com/xitongsys/pangolin/config"
+	"github.com/xitongsys/pangolin/header"
+	"github.com/xitongsys/pangolin/logging"
+	"github.com/xitongsys/pangolin/tun"
 )
 
 type UdpClient struct {

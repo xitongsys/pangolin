@@ -47,7 +47,7 @@ func (h *IPv4Pseudo) Unmarshal(bs []byte) error {
 }
 
 func (h *IPv4Pseudo) Marshal() []byte {
-	headerLen := int(h.HeaderLen()) 
+	headerLen := int(h.HeaderLen())
 	res := make([]byte, headerLen)
 	binary.BigEndian.PutUint32(res[0:], h.Src)
 	binary.BigEndian.PutUint32(res[4:], h.Dst)

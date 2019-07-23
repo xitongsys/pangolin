@@ -1,23 +1,23 @@
 package comp
 
 import (
-	"fmt"
 	"bytes"
-	"io/ioutil"
 	"compress/gzip"
+	"fmt"
+	"io/ioutil"
 )
 
 func reverse(buf []byte) []byte {
 	n := len(buf)
 	res := make([]byte, n)
-	for i:=0; i<n; i++{
+	for i := 0; i < n; i++ {
 		res[n-1-i] = buf[i]
 	}
 	return res
 }
 
 func UncompressGzip(buf []byte) (bs []byte, rerr error) {
-	defer func(){
+	defer func() {
 		if err := recover(); err != nil {
 			rerr = fmt.Errorf("%v", err)
 		}

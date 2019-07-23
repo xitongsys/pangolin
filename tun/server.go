@@ -3,9 +3,9 @@ package tun
 import (
 	"time"
 
-	"cache"
-	"header"
-	"logging"
+	"github.com/xitongsys/pangolin/cache"
+	"github.com/xitongsys/pangolin/header"
+	"github.com/xitongsys/pangolin/logging"
 )
 
 var TUNCHANBUFFSIZE = 1024
@@ -18,14 +18,14 @@ type TunServer struct {
 	InputChan chan string
 }
 
-func NewTunServer(tname string, mtu int) (*TunServer, error){
+func NewTunServer(tname string, mtu int) (*TunServer, error) {
 	ts := &TunServer{
-		RouteMap : cache.NewCache(time.Minute * 10),
+		RouteMap:  cache.NewCache(time.Minute * 10),
 		InputChan: make(chan string, TUNCHANBUFFSIZE),
 	}
-	if tun, err := NewLinuxTun(tname, mtu); err!=nil {
+	if tun, err := NewLinuxTun(tname, mtu); err != nil {
 		return nil, err
-	}else{
+	} else {
 		ts.TunConn = tun
 	}
 	return ts, nil
@@ -34,19 +34,19 @@ func NewTunServer(tname string, mtu int) (*TunServer, error){
 func (ts *TunServer) Start() {
 	logging.Log.Info("TunServer started")
 	//tun to client
-	go func(){
-		defer func(){
+	go func() {
+		defer func() {
 			recover()
 		}()
 
 		for {
 			data := make([]byte, ts.TunConn.GetMtu()*2)
-			if n, err := ts.TunConn.Read(data); err==nil && n > 0 {
+			if n, err := ts.TunConn.Read(data); err == nil && n > 0 {
 				if proto, src, dst, err := header.GetBase(data); err == nil {
 					key := proto + ":" + dst + ":" + src
 					if outputChan := ts.RouteMap.Get(key); outputChan != nil {
 						go func() {
-							defer func(){
+							defer func() {
 								recover()
 							}()
 							outputChan.(chan string) <- string(data[:n])
@@ -61,11 +61,11 @@ func (ts *TunServer) Start() {
 
 	//chan to tun
 	go func() {
-		defer func(){
+		defer func() {
 			recover()
 		}()
 		for {
-			if data, ok := <- ts.InputChan; ok && len(data)>0 {
+			if data, ok := <-ts.InputChan; ok && len(data) > 0 {
 				ts.TunConn.Write([]byte(data))
 			}
 		}
@@ -73,20 +73,20 @@ func (ts *TunServer) Start() {
 }
 
 func (ts *TunServer) StartClient(client string, inputChan chan string, outputChan chan string) {
-	go func(){
-		defer func(){
+	go func() {
+		defer func() {
 			recover()
 		}()
 
-		for{
-			data, ok := <- inputChan
-			if ! ok {
+		for {
+			data, ok := <-inputChan
+			if !ok {
 				return
 			}
 			if proto, src, dst, err := header.GetBase([]byte(data)); err == nil {
 				key := proto + ":" + src + ":" + dst
 				ts.RouteMap.Put(key, outputChan)
-				ts.InputChan <- data			
+				ts.InputChan <- data
 				logging.Log.Debugf("ToTun: protocol:%v, src:%v, dst:%v", proto, src, dst)
 			}
 		}
@@ -95,10 +95,10 @@ func (ts *TunServer) StartClient(client string, inputChan chan string, outputCha
 
 func (ts *TunServer) Stop() {
 	logging.Log.Info("TunServer stopped")
-	defer func(){
+	defer func() {
 		recover()
 	}()
-	
+
 	close(ts.InputChan)
 	ts.RouteMap.Clear()
 }

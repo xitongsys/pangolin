@@ -5,21 +5,22 @@ import (
 	"net"
 	"time"
 
-	"comp"
-	"header"
-	"cache"
-	"config"
-	"logging"
+	"github.com/xitongsys/pangolin/cache"
+	"github.com/xitongsys/pangolin/comp"
+	"github.com/xitongsys/pangolin/config"
+	"github.com/xitongsys/pangolin/header"
+	"github.com/xitongsys/pangolin/logging"
 )
+
 var UDPCHANBUFFERSIZE = 1024
 
 type UdpServer struct {
-	Addr      string
-	UdpConn   *net.UDPConn
-	LoginManager *LoginManager
+	Addr          string
+	UdpConn       *net.UDPConn
+	LoginManager  *LoginManager
 	TunToConnChan chan string
 	ConnToTunChan chan string
-	RouteMap *cache.Cache
+	RouteMap      *cache.Cache
 }
 
 func NewUdpServer(cfg *config.Config, loginManager *LoginManager) (*UdpServer, error) {
@@ -35,12 +36,12 @@ func NewUdpServer(cfg *config.Config, loginManager *LoginManager) (*UdpServer, e
 	}
 
 	return &UdpServer{
-		Addr:      addr,
-		UdpConn:   conn,
-		LoginManager: loginManager,
+		Addr:          addr,
+		UdpConn:       conn,
+		LoginManager:  loginManager,
 		TunToConnChan: make(chan string, UDPCHANBUFFERSIZE),
 		ConnToTunChan: make(chan string, UDPCHANBUFFERSIZE),
-		RouteMap: cache.NewCache(time.Minute * 10),
+		RouteMap:      cache.NewCache(time.Minute * 10),
 	}, nil
 }
 
@@ -49,8 +50,8 @@ func (us *UdpServer) Start() error {
 	us.LoginManager.TunServer.StartClient("udp", us.ConnToTunChan, us.TunToConnChan)
 
 	//from conn to tun
-	go func(){
-		defer func(){
+	go func() {
+		defer func() {
 			recover()
 		}()
 
@@ -73,13 +74,13 @@ func (us *UdpServer) Start() error {
 	}()
 
 	//from tun to conn
-	go func(){
-		defer func(){
+	go func() {
+		defer func() {
 			recover()
 		}()
 
 		for {
-			data, ok := <- us.TunToConnChan
+			data, ok := <-us.TunToConnChan
 			if ok {
 				if protocol, src, dst, err := header.GetBase([]byte(data)); err == nil {
 					key := protocol + ":" + dst + ":" + src
@@ -97,31 +98,31 @@ func (us *UdpServer) Start() error {
 		}
 
 	}()
-	
+
 	return nil
 }
 
 func (us *UdpServer) Stop() error {
 	logging.Log.Info("UdpServer stopped")
 
-	go func(){
-		defer func(){
+	go func() {
+		defer func() {
 			recover()
 		}()
 
 		close(us.TunToConnChan)
 	}()
 
-	go func(){
-		defer func(){
+	go func() {
+		defer func() {
 			recover()
 		}()
 
 		close(us.ConnToTunChan)
 	}()
 
-	go func(){
-		defer func(){
+	go func() {
+		defer func() {
 			recover()
 		}()
 
