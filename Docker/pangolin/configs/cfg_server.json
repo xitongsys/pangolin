@@ -1,6 +1,6 @@
 {
     "role": "server",
-    "server": "0.0.0.0:{SERVERPORT}",
+    "server": "172.19.36.185:{SERVERPORT}",
     "tun": "10.0.0.2/8",
     "tunname": "tun0",
 	"ptcpinterface": "eth0",
