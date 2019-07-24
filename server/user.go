@@ -6,6 +6,7 @@ import (
 	"github.com/xitongsys/pangolin/encrypt"
 	"github.com/xitongsys/pangolin/header"
 	"github.com/xitongsys/pangolin/logging"
+	"github.com/xitongsys/pangolin/protocol"
 	"github.com/xitongsys/pangolin/util"
 )
 
@@ -54,6 +55,12 @@ func (user *User) Start() {
 			if user.Protocol == "tcp" {
 				data, err = util.ReadPacket(user.Conn)
 
+			} else if user.Protocol == "ptcp" {
+				if n, err = user.Conn.Read(buf); err == nil && n > 1 && buf[0] == protocol.PTCP_PACKETTYPE_DATA {
+
+					data = buf[1:n]
+				}
+
 			} else {
 				if n, err = user.Conn.Read(buf); err == nil && n > 0 {
 					data = buf[:n]
@@ -67,12 +74,12 @@ func (user *User) Start() {
 
 			if ln := len(data); ln > 0 {
 				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
-					if protocol, src, dst, err := header.GetBase(data); err == nil {
+					if proto, src, dst, err := header.GetBase(data); err == nil {
 						remoteIp, _ := header.ParseAddr(src)
 						user.RemoteTunIp = remoteIp
 						Snat(data, user.LocalTunIp)
 						user.ConnToTunChan <- string(data)
-						logging.Log.Debugf("From %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
+						logging.Log.Debugf("From %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, proto, ln, src, dst)
 					}
 				}
 			}
@@ -89,11 +96,15 @@ func (user *User) Start() {
 			}
 			data := []byte(datas)
 			if ln := len(data); ln > 0 {
-				if protocol, src, dst, err := header.GetBase(data); err == nil {
+				if proto, src, dst, err := header.GetBase(data); err == nil {
 					Dnat(data, user.RemoteTunIp)
 					if endata, err := encrypt.EncryptAES(data, encryptKey); err == nil {
 						if user.Protocol == "tcp" {
 							_, err = util.WritePacket(user.Conn, endata)
+
+						} else if user.Protocol == "ptcp" {
+							packet := append([]byte{protocol.PTCP_PACKETTYPE_LOGIN}, endata...)
+							_, err = user.Conn.Write(packet)
 
 						} else {
 							_, err = user.Conn.Write(endata)
@@ -103,7 +114,7 @@ func (user *User) Start() {
 							user.Close()
 							return
 						}
-						logging.Log.Debugf("To %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, protocol, ln, src, dst)
+						logging.Log.Debugf("To %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, proto, ln, src, dst)
 					}
 				}
 			}
