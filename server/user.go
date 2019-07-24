@@ -103,7 +103,7 @@ func (user *User) Start() {
 							_, err = util.WritePacket(user.Conn, endata)
 
 						} else if user.Protocol == "ptcp" {
-							packet := append([]byte{protocol.PTCP_PACKETTYPE_LOGIN}, endata...)
+							packet := append([]byte{protocol.PTCP_PACKETTYPE_DATA}, endata...)
 							_, err = user.Conn.Write(packet)
 
 						} else {
