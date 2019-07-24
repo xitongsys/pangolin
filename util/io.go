@@ -26,6 +26,9 @@ func WriteUntil(conn net.Conn, bufSize int, data []byte, timeout time.Duration, 
 			select {
 			case <-done:
 				return
+			case <-after:
+				err = fmt.Errorf("timeout")
+				return
 			default:
 				return
 			}
@@ -33,12 +36,6 @@ func WriteUntil(conn net.Conn, bufSize int, data []byte, timeout time.Duration, 
 	}()
 
 	for err == nil {
-		select {
-		case <-after:
-			return nil, fmt.Errorf("timeout")
-		default:
-		}
-
 		n, errR := conn.Read(buf)
 		if errR != nil {
 			err = errR
