@@ -105,18 +105,19 @@ func (tc *PTcpClient) login() error {
 }
 
 func (tc *PTcpClient) Start() error {
-	logging.Log.Info("PTcpClient started")
+	logging.Log.Info("PTcpClient login...")
 	if err := tc.login(); err != nil {
 		return err
 	}
 	go tc.writeToServer()
 	go tc.readFromServer()
+	logging.Log.Info("PTcpClient started")
 	return nil
 }
 
 func (tc *PTcpClient) Stop() error {
-	logging.Log.Info("PTcpClient stopped")
 	tc.PTcpConn.Close()
 	tc.TunConn.Close()
+	logging.Log.Info("PTcpClient stopped")
 	return nil
 }
