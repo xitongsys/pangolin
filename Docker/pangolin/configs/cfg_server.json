@@ -6,6 +6,6 @@
 	"ptcpinterface": "eth0",
     "dns": "8.8.8.8",
     "mtu": 1200,
-    "protocol": "tcp",
+    "protocol": "ptcp",
     "tokens": {TOKENS}
 }
