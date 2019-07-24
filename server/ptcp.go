@@ -3,9 +3,11 @@ package server
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/xitongsys/pangolin/config"
 	"github.com/xitongsys/pangolin/logging"
+	"github.com/xitongsys/pangolin/protocol"
 	"github.com/xitongsys/pangolin/util"
 	"github.com/xitongsys/ptcp/ptcp"
 )
@@ -59,6 +61,7 @@ func (ts *PTcpServer) handleRequest(conn net.Conn) {
 	logging.Log.Infof("New connected client: %v", client)
 	if err := ts.login(client, conn); err != nil {
 		logging.Log.Errorf("Client %v login failed: %v", client, err)
+		conn.Close()
 		return
 	}
 	ts.LoginManager.StartClient(client, conn)
@@ -69,20 +72,40 @@ func (ts *PTcpServer) login(client string, conn net.Conn) error {
 	var n int
 	var err error
 
+	after := time.After(time.Second * 100)
 	for {
+		select {
+		case <-after:
+			return fmt.Errorf("timeout")
+		default:
+		}
+
 		n, err = conn.Read(buf)
 		if err != nil {
-			return fmt.Errorf("conn closed")
+			return err
 		}
-		if n <= 0 {
+		if n <= 1 {
 			continue
 		}
 
-		data := buf[:n]
-		err = ts.LoginManager.Login(client, "ptcp", string(data))
-		if err == nil {
+		if buf[0] == protocol.PTCP_PACKETTYPE_LOGIN {
+			data := buf[1:n]
+			if err = ts.LoginManager.Login(client, "ptcp", string(data)); err != nil {
+				return err
+			}
 			break
 		}
 	}
+
+	timeout := time.Second * 100
+	data := []byte{protocol.PTCP_PACKETTYPE_LOGIN, protocol.PTCP_LOGINMSG_SUCCESS}
+	_, err = util.WriteUntil(conn, 10240, data, timeout,
+		func(ds []byte) bool {
+			if len(ds) <= 1 || ds[0] != protocol.PTCP_PACKETTYPE_DATA {
+				return false
+			}
+			return true
+		})
+
 	return err
 }

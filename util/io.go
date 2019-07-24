@@ -1,8 +1,60 @@
 package util
 
 import (
+	"fmt"
 	"io"
+	"net"
+	"time"
 )
+
+func WriteUntil(conn net.Conn, bufSize int, data []byte, timeout time.Duration, fun func([]byte) bool) (res []byte, err error) {
+	after := time.After(timeout)
+	done := make(chan bool)
+	buf := make([]byte, bufSize)
+	defer func() {
+		close(done)
+	}()
+
+	go func() {
+		for {
+			_, errW := conn.Write(data)
+			if errW != nil {
+				err = errW
+				return
+			}
+
+			select {
+			case <-done:
+				return
+			default:
+				return
+			}
+		}
+	}()
+
+	for err == nil {
+		select {
+		case <-after:
+			return nil, fmt.Errorf("timeout")
+		default:
+		}
+
+		n, errR := conn.Read(buf)
+		if errR != nil {
+			err = errR
+			return nil, err
+		}
+
+		if n <= 0 {
+			continue
+		}
+
+		if fun(buf[:n]) {
+			return buf[:n], nil
+		}
+	}
+	return nil, err
+}
 
 func ReadPacket(reader io.Reader) ([]byte, error) {
 	data, lenBs := []byte{}, []byte{0}
