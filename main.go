@@ -68,7 +68,7 @@ func main() {
 				os.Exit(-1)
 			}
 
-			tcpClient.Start()
+			err = tcpClient.Start()
 
 		} else if cfg.Protocol == "ptcp" {
 			ptcpClient, err := client.NewPTcpClient(cfg)
@@ -77,7 +77,7 @@ func main() {
 				os.Exit(-1)
 			}
 
-			ptcpClient.Start()
+			err = ptcpClient.Start()
 
 		} else {
 			udpClient, err := client.NewUdpClient(cfg)
@@ -85,9 +85,14 @@ func main() {
 				logging.Log.Error(err)
 				os.Exit(-1)
 			}
-			udpClient.Start()
+			err = udpClient.Start()
 		}
 
+	}
+
+	if err != nil {
+		logging.Log.Error(err)
+		os.Exit(-1)
 	}
 
 	var wg sync.WaitGroup
