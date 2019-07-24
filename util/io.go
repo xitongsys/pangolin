@@ -31,7 +31,7 @@ func WriteUntil(conn net.Conn, bufSize int, data []byte, timeout time.Duration, 
 				return
 			case <-after:
 				err = fmt.Errorf("timeout")
-				panic(err)
+				conn.Close()
 				return
 			default:
 			}
