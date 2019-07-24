@@ -4,7 +4,7 @@ function start_server ()
 	ip tuntap add dev tun0 mod tun
 	ip addr add 10.0.0.2/8 dev tun0
 	ip link set tun0 up
-	ip link set dev tun0 mtu 1200
+	ip link set dev tun0 mtu 1400
 	ip=`ip addr show dev "eth0" | awk '$1 == "inet" { sub("/.*", "", $2); print $2 }'`
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source $ip
@@ -17,7 +17,7 @@ function start_client ()
 	ip tuntap add dev tun0 mod tun
 	ip addr add 10.0.0.22/8 dev tun0
 	ip link set tun0 up
-	ip link set dev tun0 mtu 1200
+	ip link set dev tun0 mtu 1400
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o tun0 -j SNAT --to-source 10.0.0.22
 	iptables -P FORWARD ACCEPT
