@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/xitongsys/pangolin/header"
+	"github.com/xitongsys/ethernet-go/header"
 )
 
 func Snat(data []byte, src string) {
