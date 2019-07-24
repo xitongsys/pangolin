@@ -35,6 +35,8 @@ func WriteUntil(conn net.Conn, bufSize int, data []byte, timeout time.Duration, 
 				return
 			default:
 			}
+
+			time.Sleep(time.Millisecond * 100)
 		}
 	}()
 
