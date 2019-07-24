@@ -1,7 +1,7 @@
 # Pangolin
 
 Pangolin is a Go implenmentation of TUN VPN. 
-* Support Tcp/Udp connection.
+* Support Tcp/Udp/[Ptcp](https://github.com/xitongsys/ptcp) connection. (I suggest you use Ptcp, which has the same performance with Udp and no avoid some Udp issues)
 * For Tcp, it supports multi-user authentication, encryption transmission. For Udp, no authentication.
 * Using Docker, it supports Linux/Windows/Mac.
 * For client, it supports Linux/Windows/Mac/Android.

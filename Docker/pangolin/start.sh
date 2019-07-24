@@ -6,6 +6,7 @@ function start_server ()
 	ip link set tun0 up
 	ip link set dev tun0 mtu 1400
 	ip=`ip addr show dev "eth0" | awk '$1 == "inet" { sub("/.*", "", $2); print $2 }'`
+	SERVERIP=$ip
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source $ip
 	iptables -P FORWARD ACCEPT
