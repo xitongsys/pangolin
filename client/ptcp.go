@@ -85,7 +85,7 @@ func (tc *PTcpClient) login() error {
 		return fmt.Errorf("no token provided")
 	}
 	data := append([]byte{0}, []byte(tc.Cfg.Tokens[0])...)
-	timeout := time.Second * 100
+	timeout := time.Second * 20
 	res, err := util.WriteUntil(tc.PTcpConn, 1024, data, timeout,
 		func(ds []byte) bool {
 			if len(ds) <= 1 || ds[0] != protocol.PTCP_PACKETTYPE_LOGIN {

@@ -72,7 +72,7 @@ func (ts *PTcpServer) login(client string, conn net.Conn) error {
 	var n int
 	var err error
 
-	after := time.After(time.Second * 100)
+	after := time.After(time.Second * 20)
 	for {
 		select {
 		case <-after:
@@ -97,7 +97,7 @@ func (ts *PTcpServer) login(client string, conn net.Conn) error {
 		}
 	}
 
-	timeout := time.Second * 100
+	timeout := time.Second * 20
 	data := []byte{protocol.PTCP_PACKETTYPE_LOGIN, protocol.PTCP_LOGINMSG_SUCCESS}
 	_, err = util.WriteUntil(conn, 10240, data, timeout,
 		func(ds []byte) bool {
