@@ -61,31 +61,24 @@ func main() {
 		ptcpServer.Start()
 
 	} else {
-		if cfg.Protocol == "tcp" {
-			tcpClient, err := client.NewTcpClient(cfg)
-			if err != nil {
-				logging.Log.Error(err)
-				os.Exit(-1)
-			}
+		var tcpClient *client.TcpClient
+		var ptcpClient *client.PTcpClient
+		var udpClient *client.UdpClient
 
-			err = tcpClient.Start()
+		if cfg.Protocol == "tcp" {
+			if tcpClient, err = client.NewTcpClient(cfg); err == nil {
+				err = tcpClient.Start()
+			}
 
 		} else if cfg.Protocol == "ptcp" {
-			ptcpClient, err := client.NewPTcpClient(cfg)
-			if err != nil {
-				logging.Log.Error(err)
-				os.Exit(-1)
+			if ptcpClient, err = client.NewPTcpClient(cfg); err == nil {
+				err = ptcpClient.Start()
 			}
-
-			err = ptcpClient.Start()
 
 		} else {
-			udpClient, err := client.NewUdpClient(cfg)
-			if err != nil {
-				logging.Log.Error(err)
-				os.Exit(-1)
+			if udpClient, err = client.NewUdpClient(cfg); err == nil {
+				err = udpClient.Start()
 			}
-			err = udpClient.Start()
 		}
 
 	}
