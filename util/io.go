@@ -12,6 +12,7 @@ func WriteUntil(conn net.Conn, bufSize int, data []byte, timeout time.Duration, 
 	done := make(chan bool)
 	buf := make([]byte, bufSize)
 	defer func() {
+		err = recover()
 		close(done)
 	}()
 
@@ -28,10 +29,9 @@ func WriteUntil(conn net.Conn, bufSize int, data []byte, timeout time.Duration, 
 				return
 			case <-after:
 				err = fmt.Errorf("timeout")
-				conn.Close()
+				panic(err)
 				return
 			default:
-				return
 			}
 		}
 	}()
