@@ -10,9 +10,10 @@ function start_server ()
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source $ip
 	iptables -P FORWARD ACCEPT
+	iptables -A INPUT -p tcp --destination-port `expr $SERVERPORT + 1` -j DROP
 
 	replace /pangolin/configs/cfg_server.json
-	/pangolin/main -c /pangolin/configs/cfg_server.json
+	/pangolin/main -c /pangolin/configs/cfg_server.json 
 }
 
 function start_client ()
