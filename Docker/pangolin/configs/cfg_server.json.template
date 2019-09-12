@@ -3,9 +3,9 @@
     "server": "{SERVERIP}:{SERVERPORT}",
     "tun": "10.0.0.2/8",
     "tunname": "tun0",
-	"ptcpinterface": "eth0",
+	"ptcpinterface": "{INTERFACE}",
     "dns": "8.8.8.8",
-    "mtu": 1200,
+    "mtu": 1400,
     "protocol": "ptcp",
     "tokens": {TOKENS}
 }
