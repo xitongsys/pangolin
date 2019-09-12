@@ -1,5 +1,6 @@
 FROM ubuntu
 USER root
+WORKDIR /pangolin
 ENTRYPOINT bash /pangolin/start.sh
 
 RUN apt update
