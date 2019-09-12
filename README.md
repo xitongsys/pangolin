@@ -16,10 +16,10 @@ Pangolin server can only run natively on Linux. But you can use docker to run it
 * Change the environment variables in start.sh to your own.
 
 ```bash
-#SERVERIP=0.0.0.0
-#SERVERPORT=12345
-#TOKENS='["token01", "token02"]'
-#ROLE=CLIENT
+SERVERIP=0.0.0.0
+SERVERPORT=12345
+TOKENS='["token01", "token02"]'
+ROLE=SERVER
 ```
 
 * Start the pangolin server.
@@ -31,6 +31,12 @@ bash start.sh
 
 ### Linux
 Same steps with the server. But change the ```ROLE``` to ```CLIENT```.
+```bash
+SERVERIP=your.server.ip.address
+SERVERPORT=12345
+TOKENS='["token01", "token02"]'
+ROLE=CLIENT
+```
 
 ### Windows
 * [Windows Client](https://github.com/xitongsys/pangolin-win)
