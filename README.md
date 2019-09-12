@@ -11,7 +11,7 @@ Pangolin server can only run natively on Linux. But you can use docker to run it
 
 * Download the latest release package and ```cd pangolin_linux/``` 
 
-* Change the environment variables in start.sh to your own.
+* Change the environment variables in ```start.sh``` to your own.
 
 ```bash
 SERVERIP=0.0.0.0
