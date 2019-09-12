@@ -1,9 +1,11 @@
+SOURCE_DIR="../"
 SERVERIP="0.0.0.0"
 SERVERPORT="12345"
 TOKENS='["token01", "token02"]'
 ROLE="SERVER"
 
-function install () {
+function build () {
+	go build -o pangolin/main $SOURCE_DIR
 	docker build -t pangolin .
 }
 
@@ -18,6 +20,6 @@ function stop() {
 
 
 cmd=$1
-[[ "$cmd" == "install" ]] && install
+[[ "$cmd" == "build" ]] && build
 [[ "$cmd" == "start" ]] && start
 [[ "$cmd" == "stop" ]] && stop
