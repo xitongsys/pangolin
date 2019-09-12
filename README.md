@@ -3,7 +3,7 @@
 Pangolin is a Go implenmentation of VPN. 
 * Support TCP/UDP/[PTCP](https://github.com/xitongsys/ptcp) connection. (I suggest PTCP, which has the same performance with UDP and avoid some UDP issues)
 * For PTCP/TCP, it supports multi-user authentication, encryption transmission. For UDP, no authentication.
-* Using Docker, it supports Linux/Windows/Mac.
+* Using Docker/VM, it supports Linux/Windows/Mac.
 * For client, it supports Linux/Windows/Android now.
 
 ## Server 
@@ -59,7 +59,6 @@ ROLE="SERVER"
 
 * Build:  ```bash pangolin_docker.sh build```
 
-
 ### Start/Stop
 ```bash
 bash pangolin_docker.sh start
@@ -71,5 +70,3 @@ This project is still in progress and you can contribute to it. Anything is welc
 * Mac/iOS client
 * Improve Android client
 * Add UT/Doc
-
-
