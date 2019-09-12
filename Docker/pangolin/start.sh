@@ -39,17 +39,17 @@ function start_client ()
 	route add default gw 10.0.0.1
 	echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
-	replace /pangolin/configs/cfg_client.json.template > configs/cfg_client.json
-	./main -c ./configs/cfg_client.json 
+	replace configs/cfg_client.json.template > configs/cfg_client.json
+	./main -c configs/cfg_client.json 
 }
 
 
 function replace ()
 {	
-	sed -n "s/{SERVERIP}/$SERVERIP/g" $1
-	sed -n "s/{SERVERPORT}/$SERVERPORT/g" $1
-	sed -n "s/{TOKENS}/$TOKENS/g" $1
-	sed -n "s/{INTERFACE}/$INTERFACE/g" $1
+	sed  "s/{SERVERIP}/$SERVERIP/g" $1
+	sed  "s/{SERVERPORT}/$SERVERPORT/g" $1
+	sed  "s/{TOKENS}/$TOKENS/g" $1
+	sed  "s/{INTERFACE}/$INTERFACE/g" $1
 }
 
 
