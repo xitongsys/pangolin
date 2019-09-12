@@ -1,4 +1,4 @@
-# Pangolin
+# ![logo](imgs/logo.png?raw=true)   Pangolin
 
 Pangolin is a Go implenmentation of VPN. 
 * Support TCP/UDP/[PTCP](https://github.com/xitongsys/ptcp) connection. (I suggest PTCP, which has the same performance with UDP and avoid some UDP issues)
@@ -9,9 +9,7 @@ Pangolin is a Go implenmentation of VPN.
 ## Server 
 Pangolin server can only run natively on Linux. But you can use docker to run it on Windows and Mac.
 
-* Download the latest release package.
-
-* ```cd pangolin_linux/``` 
+* Download the latest release package and ```cd pangolin_linux/``` 
 
 * Change the environment variables in start.sh to your own.
 
@@ -22,15 +20,12 @@ TOKENS='["token01", "token02"]'
 ROLE=SERVER
 ```
 
-* Start the pangolin server.
-```bash
-bash start.sh
-```
+* Start the pangolin server:  ```bash start.sh```
 
 ## Client
 
 ### Linux
-Same steps with the server. But change the ```ROLE``` to ```CLIENT```.
+Same steps with the server. But ```ROLE=CLIENT```.
 ```bash
 SERVERIP=your.server.ip.address
 SERVERPORT=12345
@@ -41,8 +36,12 @@ ROLE=CLIENT
 ### Windows
 * [Windows Client](https://github.com/xitongsys/pangolin-win)
 
+![Windows Client](imgs/win.png?raw=true)
+
 ### Android
 * [Android Client](https://github.com/xitongsys/pangolin-android)
+
+![Android Client](imgs/android.png?raw=true)
 
 ## Docker
 
@@ -58,10 +57,10 @@ TOKENS='["token01", "token02"]'
 ROLE="SERVER"
 ```
 
-* Build ```bash pangolin_docker.sh build```
+* Build:  ```bash pangolin_docker.sh build```
 
 
-### Run/Stop
+### Start/Stop
 ```bash
 bash pangolin_docker.sh start
 bash pangolin_docker.sh stop
