@@ -1,7 +1,7 @@
 #SERVERIP=0.0.0.0
 #SERVERPORT=12345
 #TOKENS='["token01", "token02"]'
-#ROLE=CLIENT
+#ROLE=SERVER
 
 function start_server ()
 {
@@ -11,6 +11,7 @@ function start_server ()
 	ip link set dev tun0 mtu 1400
 	ifc=`route -n | awk '{if($1=="0.0.0.0" && $8 != "tun0"){print $8; exit;}}'`
 	INTERFACE="$ifc"
+	ip=`ip addr show dev "$ifc" | awk '$1 == "inet" { sub("/.*", "", $2); print $2 }'`
 
 	SERVERIP=$ip
 	iptables -t nat -F
