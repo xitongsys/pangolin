@@ -9,16 +9,17 @@ function start_server ()
 	ip addr add 10.0.0.2/8 dev tun0
 	ip link set tun0 up
 	ip link set dev tun0 mtu 1400
-	ifc=`route -n | awk '{if($1=="0.0.0.0") print $8}'`
+	ifc=`route -n | awk '{if($1=="0.0.0.0" && $8 != "tun0"){print $8; exit;}}'`
 	INTERFACE="$ifc"
-	ip=`ip addr show dev "$ifc" | awk '$1 == "inet" { sub("/.*", "", $2); print $2 }'`
+
 	SERVERIP=$ip
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o "$ifc" -j SNAT --to-source $ip
 	iptables -P FORWARD ACCEPT
 	iptables -A INPUT -p tcp --destination-port `expr $SERVERPORT + 1` -j DROP
 
-	replace configs/cfg_server.json.template > configs/cfg_server.json
+	cp -f configs/cfg_server.json.template configs/cfg_server.json
+	replace configs/cfg_server.json
 	./main -c configs/cfg_server.json 
 }
 
@@ -31,7 +32,7 @@ function start_client ()
 	iptables -t nat -F
 	iptables -t nat -A POSTROUTING -o tun0 -j SNAT --to-source 10.0.0.22
 	iptables -P FORWARD ACCEPT
-	ifc=`route -n | awk '{if($1=="0.0.0.0") print $8}'`
+	ifc=`route -n | awk '{if($1=="0.0.0.0" && $8 != "tun0"){print $8; exit;}}'`
 	INTERFACE="$ifc"
 	
 	gw=`route -n | awk '$1 == "0.0.0.0" {print $2}'`
@@ -39,17 +40,18 @@ function start_client ()
 	route add default gw 10.0.0.1
 	echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
-	replace configs/cfg_client.json.template > configs/cfg_client.json
+	cp -f configs/cfg_client.json.template configs/cfg_client.json
+	replace configs/cfg_client.json
 	./main -c configs/cfg_client.json 
 }
 
 
 function replace ()
 {	
-	sed  "s/{SERVERIP}/$SERVERIP/g" $1
-	sed  "s/{SERVERPORT}/$SERVERPORT/g" $1
-	sed  "s/{TOKENS}/$TOKENS/g" $1
-	sed  "s/{INTERFACE}/$INTERFACE/g" $1
+	sed -i "s/{SERVERIP}/$SERVERIP/g" $1
+	sed -i "s/{SERVERPORT}/$SERVERPORT/g" $1
+	sed -i "s/{TOKENS}/$TOKENS/g" $1
+	sed -i "s/{INTERFACE}/$INTERFACE/g" $1
 }
 
 
